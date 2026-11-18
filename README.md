@@ -347,7 +347,7 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 189 tests                                                  |
+| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 190 tests                                                  |
 | Tests unitarios de servicios y controladores (NestJS) | Jest: 256 tests (más 54 de integración con PostgreSQL real)                          |
 | Cobertura de al menos 80%                             | API 99,2% de líneas, web 95,7%; umbrales del 80% configurados en ambas apps          |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
@@ -491,7 +491,7 @@ devuelve un mensaje genérico.
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
 | API (Jest)                     | 256   | 99,2% (sentencias 98,1%; ramas 86,6%)                         |
-| Web (Vitest + Testing Library) | 189   | 95,7% (ramas 93,7%)                                           |
+| Web (Vitest + Testing Library) | 190   | 95,7% (ramas 93,7%)                                           |
 | Integración (Testcontainers)   | 54    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
 | E2E (Playwright, Chromium)     | 26    | Flujos críticos de todos los módulos                          |
 
