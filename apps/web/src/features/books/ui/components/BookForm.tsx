@@ -1,8 +1,7 @@
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
-import { Link } from 'react-router-dom';
-import { Button } from '../../../../shared/ui/Button';
+import { FormActions } from '../../../../shared/ui/FormActions';
 import { useCatalog } from '../../application/book-queries';
 import {
   EMPTY_BOOK_FORM,
@@ -48,19 +47,12 @@ export function BookForm({
     >
       <BookFormFields register={register} errors={errors} catalog={catalog} />
       <ImagePicker currentUrl={currentImageUrl} onChange={setImage} />
-      <div className="form__actions">
-        <Link to="/books" className="button button--ghost">
-          Cancelar
-        </Link>
-        <Button
-          type="submit"
-          variant="primary"
-          disabled={!isValid || !hasChanges}
-          isLoading={isSubmitting}
-        >
-          {submitLabel}
-        </Button>
-      </div>
+      <FormActions
+        cancelTo="/books"
+        submitLabel={submitLabel}
+        isDisabled={!isValid || !hasChanges}
+        isLoading={isSubmitting}
+      />
     </form>
   );
 }

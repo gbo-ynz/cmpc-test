@@ -1,62 +1,13 @@
 import { ApiPropertyOptional } from '@nestjs/swagger';
-import { Transform, TransformFnParams, Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsInt,
-  IsOptional,
-  IsString,
-  IsUUID,
-  Matches,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
-import { BOOK_SORT_FIELDS } from '../../domain/book-criteria';
+import { Type } from 'class-transformer';
+import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { BookFiltersQueryDto } from './book-filters.query.dto';
+
+export { BookFiltersQueryDto, SORT_PATTERN } from './book-filters.query.dto';
 
 export const MAX_PAGE_SIZE = 100;
-export const SORT_PATTERN = /^[a-zA-Z]+:(asc|desc)(,[a-zA-Z]+:(asc|desc))*$/;
 
-const BOOLEAN_STRINGS: Record<string, boolean> = { true: true, false: false };
-const toBoolean = ({ value }: TransformFnParams): unknown =>
-  typeof value === 'string' ? (BOOLEAN_STRINGS[value] ?? value) : value;
-
-export class BookFiltersQueryDto {
-  @ApiPropertyOptional({ description: 'Searches title, author and publisher' })
-  @IsOptional()
-  @IsString()
-  @MaxLength(100)
-  search?: string;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  genreId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  publisherId?: string;
-
-  @ApiPropertyOptional({ format: 'uuid' })
-  @IsOptional()
-  @IsUUID()
-  authorId?: string;
-
-  @ApiPropertyOptional()
-  @IsOptional()
-  @Transform(toBoolean)
-  @IsBoolean()
-  isAvailable?: boolean;
-
-  @ApiPropertyOptional({
-    example: 'title:asc,price:desc',
-    description: `Comma separated field:direction. Fields: ${BOOK_SORT_FIELDS.join(', ')}`,
-  })
-  @IsOptional()
-  @Matches(SORT_PATTERN)
-  sort?: string;
-}
-
+/** The list adds server-side pagination on top of the shared filters. */
 export class ListBooksQueryDto extends BookFiltersQueryDto {
   @ApiPropertyOptional({ default: 1, minimum: 1 })
   @IsOptional()

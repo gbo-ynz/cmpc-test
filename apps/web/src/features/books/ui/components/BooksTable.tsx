@@ -2,16 +2,7 @@ import { EmptyState } from '../../../../shared/ui/EmptyState';
 import { Spinner } from '../../../../shared/ui/Spinner';
 import type { Book, SortField, SortRule } from '../../domain/book.types';
 import { BookRow } from './BookRow';
-import { SortableHeader } from './SortableHeader';
-
-const COLUMNS: ReadonlyArray<{ field: SortField; label: string }> = [
-  { field: 'title', label: 'Título' },
-  { field: 'author', label: 'Autor' },
-  { field: 'publisher', label: 'Editorial' },
-  { field: 'genre', label: 'Género' },
-  { field: 'price', label: 'Precio' },
-  { field: 'isAvailable', label: 'Estado' },
-];
+import { BooksTableHead } from './BooksTableHead';
 
 interface BooksTableProps {
   books: Book[];
@@ -43,23 +34,7 @@ export function BooksTable({ books, sort, onSort, isLoading, isRefreshing }: Boo
       aria-busy={isRefreshing}
     >
       <table className="table">
-        <caption className="sr-only">
-          Libros. Haga clic en un encabezado para ordenar; haga clic de nuevo para invertir el
-          orden.
-        </caption>
-        <thead>
-          <tr>
-            <th scope="col">
-              <span className="sr-only">Portada</span>
-            </th>
-            {COLUMNS.map(({ field, label }) => (
-              <SortableHeader key={field} field={field} label={label} sort={sort} onSort={onSort} />
-            ))}
-            <th scope="col">
-              <span className="sr-only">Acciones</span>
-            </th>
-          </tr>
-        </thead>
+        <BooksTableHead sort={sort} onSort={onSort} />
         <tbody>
           {books.map((book) => (
             <BookRow key={book.id} book={book} />
