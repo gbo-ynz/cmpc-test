@@ -1,40 +1,18 @@
-import type { PrismaClient } from '@prisma/client';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
+import { addBook, names, type BookReferences } from '../../../../test-utils/db-fixtures';
 import { startTestDatabase, type TestDatabase } from '../../../../test-utils/postgres-container';
 import { PrismaCatalogRepository } from './prisma-catalog.repository';
 
-interface References {
-  readonly author: string;
-  readonly publisher: string;
-  readonly genre: string;
-}
-
-const ACTIVE: References = {
+const ACTIVE: BookReferences = {
   author: 'Autor activo',
   publisher: 'Editorial activa',
   genre: 'Novela',
 };
-const ORPHAN: References = {
-  author: 'Autor eliminado',
-  publisher: 'Editorial eliminada',
+const ORPHAN: BookReferences = {
+  author: 'Autor baja',
+  publisher: 'Editorial baja',
   genre: 'Ensayo',
 };
-
-const named = (name: string) => ({ connectOrCreate: { where: { name }, create: { name } } });
-const names = (items: ReadonlyArray<{ name: string }>) => items.map((item) => item.name);
-
-function addBook(prisma: PrismaClient, refs: References, deletedAt: Date | null = null) {
-  return prisma.book.create({
-    data: {
-      title: `Libro de ${refs.author}`,
-      price: 1000,
-      deletedAt,
-      author: named(refs.author),
-      publisher: named(refs.publisher),
-      genre: named(refs.genre),
-    },
-  });
-}
 
 describe('PrismaCatalogRepository (PostgreSQL)', () => {
   let db: TestDatabase;

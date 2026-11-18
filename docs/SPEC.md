@@ -362,36 +362,36 @@ Las tres pantallas comparten las mismas reglas:
 | 5   | Cancelar pide confirmación, registra la fecha y no modifica el stock                                                                                              |
 | 6   | Crear, completar y cancelar quedan en `audit_logs` (acciones `CREATE`, `COMPLETE`, `CANCEL`)                                                                      |
 
-### RB-07 · Autorización por perfil 🛠
+### RB-07 · Autorización por perfil (API ✅, front 🛠)
 
-| CA  | Criterio de aceptación                                                                                                           |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Las rutas de administración responden 403 `FORBIDDEN` a un usuario sin perfil de administrador                                   |
-| 2   | El perfil se lee de la base en cada petición (RB-02 CA-4): un cambio de perfil aplica de inmediato                               |
-| 3   | El menú solo muestra las secciones permitidas y las rutas protegidas del front muestran "No tiene permisos para ver esta página" |
+| CA  | Criterio de aceptación                                                                                                           | Estado y verificación                                                                                                                                                                          |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Las rutas de administración responden 403 `FORBIDDEN` a un usuario sin perfil de administrador                                   | ✅ API `authorization.http.spec.ts` › "answers 403 FORBIDDEN to a regular user on admin routes", "authenticates before authorizing: no token is 401, not 403"; `roles.guard.spec.ts` (4 tests) |
+| 2   | El perfil se lee de la base en cada petición (RB-02 CA-4): un cambio de perfil aplica de inmediato                               | ✅ API `authorization.http.spec.ts` › "reads the role from the database, not from the token"                                                                                                   |
+| 3   | El menú solo muestra las secciones permitidas y las rutas protegidas del front muestran "No tiene permisos para ver esta página" | 🛠 Fase 2 (llega con la primera pantalla de administración)                                                                                                                                     |
 
-### BD-06 · Migración de perfiles y usuarios 🛠
+### BD-06 · Migración de perfiles y usuarios ✅
 
-| CA  | Criterio de aceptación                                                                                            |
-| --- | ----------------------------------------------------------------------------------------------------------------- |
-| 1   | El perfil `EDITOR` pasa a llamarse `USER` sin perder datos (`ALTER TYPE … RENAME VALUE`)                          |
-| 2   | `users` incorpora `deleted_at`; las búsquedas de usuarios (login y validación del token) ignoran a los eliminados |
+| CA  | Criterio de aceptación                                                                                            | Estado y verificación                                                                                                   |
+| --- | ----------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| 1   | El perfil `EDITOR` pasa a llamarse `USER` sin perder datos (`ALTER TYPE … RENAME VALUE`)                          | ✅ INT `migrations.int-spec.ts` › "renames the EDITOR role to USER without losing users"                                |
+| 2   | `users` incorpora `deleted_at`; las búsquedas de usuarios (login y validación del token) ignoran a los eliminados | ✅ INT `prisma-user.repository.int-spec.ts` › "ignores deleted users: they cannot log in and their tokens stop working" |
 
-### BD-07 · Migración de stock y ventas 🛠
+### BD-07 · Migración de stock y ventas (expandir ✅, contraer 🛠)
 
-| CA  | Criterio de aceptación                                                                                                                                         |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `books` incorpora `stock` (entero, `CHECK (stock >= 0)`); los libros existentes quedan con stock 1 si estaban disponibles y 0 si no; `is_available` se elimina |
-| 2   | Nuevas tablas `sales` y `sale_items` con estado, método de pago, total, fechas y usuario creador; `sale_items` referencia `books` y `sales`                    |
-| 3   | Índices para el listado de ventas (`status`, `created_at`) y para filtrar libros disponibles (`deleted_at`, `stock`)                                           |
-| 4   | El seed carga stock para los 23 libros de ejemplo                                                                                                              |
+| CA  | Criterio de aceptación                                                                                                                                         | Estado y verificación                                                                                                                                    |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `books` incorpora `stock` (entero, `CHECK (stock >= 0)`); los libros existentes quedan con stock 1 si estaban disponibles y 0 si no; `is_available` se elimina | ✅ INT `migrations.int-spec.ts` › "backfills the stock…", "rejects a negative stock at the database level". 🛠 Eliminar `is_available`: fase 2 (contraer) |
+| 2   | Nuevas tablas `sales` y `sale_items` con estado, método de pago, total, fechas y usuario creador; `sale_items` referencia `books` y `sales`                    | ✅ INT `migrations.int-spec.ts` › "creates the sales tables and the new audit actions"                                                                   |
+| 3   | Índices para el listado de ventas (`status`, `created_at`) y para filtrar libros disponibles (`deleted_at`, `stock`)                                           | ✅ Creados en la migración; `prisma migrate diff` sin diferencias. 🛠 El plan de ejecución se verificará cuando existan las consultas (fases 2 y 3)       |
+| 4   | El seed carga stock para los 23 libros de ejemplo                                                                                                              | ✅ INT `seed.int-spec.ts` › "loads stock, keeping availability consistent with it (stock > 0)"                                                           |
 
 ## Supuestos
 
-- La disponibilidad es un booleano; la cantidad en stock queda como evolución.
+- La disponibilidad pasa a derivarse del stock (RF-15); durante la transición se mantienen sincronizados.
 - Un libro tiene exactamente un autor, una editorial y un género.
 - Los precios están en CLP con hasta 2 decimales.
-- Todos los usuarios autenticados pueden gestionar libros (los roles `ADMIN`/`EDITOR` existen, sin RBAC aún).
+- Dos perfiles: administrador (`ADMIN`) y usuario (`USER`); ver la matriz de permisos de la ampliación.
 - No hay registro de usuarios: el enunciado pide solo login; el administrador lo crea el seed.
 
 ## Fuera del alcance

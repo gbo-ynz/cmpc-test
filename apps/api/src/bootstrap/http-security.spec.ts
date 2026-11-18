@@ -1,54 +1,24 @@
 import type { NestExpressApplication } from '@nestjs/platform-express';
-import { Test } from '@nestjs/testing';
 import request from 'supertest';
-import { AppModule } from '../app.module';
-import { JwtService } from '@nestjs/jwt';
-import { User, UserRepository } from '../modules/auth/domain/user';
-import { PrismaService } from '../shared/infrastructure/prisma/prisma.service';
-import { configureApp } from './app.setup';
+import type { UserRepository } from '../modules/auth/domain/user';
+import { ADMIN, createHttpApp, tokenFor } from '../test-utils/http-app';
 
-// Real AppModule + real HTTP setup (guards, helmet, pipes); only persistence is replaced.
 const LOGIN_LIMIT = 5;
 const GLOBAL_LIMIT = 120;
 const WRONG_CREDENTIALS = { email: 'admin@cmpc.cl', password: 'WrongPassword1!' };
-const USER: User = {
-  id: 'user-1',
-  email: 'admin@cmpc.cl',
-  name: 'Admin',
-  role: 'ADMIN',
-  passwordHash: 'unused',
-};
 
-async function createApp(): Promise<NestExpressApplication> {
-  process.env.DATABASE_URL = 'postgresql://unused:unused@localhost:5432/unused';
-  process.env.JWT_SECRET = 'x'.repeat(32);
-  const prisma = {
-    client: { $queryRaw: jest.fn().mockResolvedValue([1]) },
-    onModuleInit: jest.fn(),
-  };
-  // Unknown email (login always fails) but a resolvable id (signed tokens are accepted).
-  const users: UserRepository = {
-    findByEmail: jest.fn().mockResolvedValue(null),
-    findById: jest.fn().mockResolvedValue(USER),
-  };
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule] })
-    .overrideProvider(PrismaService)
-    .useValue(prisma)
-    .overrideProvider(UserRepository)
-    .useValue(users)
-    .compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
-  configureApp(app);
-  await app.init();
-  return app;
-}
+// Unknown email (login always fails) but a resolvable id (signed tokens are accepted).
+const users = (): UserRepository => ({
+  findByEmail: jest.fn().mockResolvedValue(null),
+  findById: jest.fn().mockResolvedValue(ADMIN),
+});
 
 describe('HTTP security (rate limiting and headers)', () => {
   let app: NestExpressApplication;
 
   // A fresh app per test: the throttler keeps its counters in memory.
   beforeEach(async () => {
-    app = await createApp();
+    app = await createHttpApp(users());
   });
 
   afterEach(() => app.close());
@@ -67,9 +37,7 @@ describe('HTTP security (rate limiting and headers)', () => {
   });
 
   it(`limits authenticated routes to ${GLOBAL_LIMIT} requests per minute`, async () => {
-    const token = await app
-      .get(JwtService)
-      .signAsync({ sub: USER.id, email: USER.email, role: USER.role });
+    const token = await tokenFor(app, ADMIN);
     const me = () =>
       request(app.getHttpServer()).get('/api/auth/me').set('Authorization', `Bearer ${token}`);
     for (let call = 1; call <= GLOBAL_LIMIT; call += 1) {

@@ -8,6 +8,7 @@ const RECORD: BookRecord = {
   title: 'Rayuela',
   price: new Prisma.Decimal('16990.50'),
   isAvailable: true,
+  stock: 3,
   imageUrl: null,
   authorId: 'a1',
   publisherId: 'p1',

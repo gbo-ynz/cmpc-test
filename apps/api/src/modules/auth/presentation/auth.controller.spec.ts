@@ -18,7 +18,7 @@ describe('AuthController', () => {
 
   it('returns the authenticated user on /me', () => {
     const controller = new AuthController({} as LoginUseCase);
-    const user = { id: '1', email: 'a@b.cl', role: 'EDITOR' as const };
+    const user = { id: '1', email: 'a@b.cl', role: 'USER' as const };
 
     expect(controller.me(user)).toBe(user);
   });

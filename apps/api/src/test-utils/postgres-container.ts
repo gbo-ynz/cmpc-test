@@ -25,10 +25,10 @@ export function runAgainst(url: string, command: string, args: readonly string[]
  * Ephemeral PostgreSQL 16 (same image as docker-compose) with the real migrations applied,
  * so integration tests run against exactly the production schema.
  */
-export async function startTestDatabase(): Promise<TestDatabase> {
+export async function startTestDatabase({ migrate = true } = {}): Promise<TestDatabase> {
   const container = await new PostgreSqlContainer('postgres:16-alpine').start();
   const url = container.getConnectionUri();
-  runAgainst(url, 'npx', ['prisma', 'migrate', 'deploy']);
+  if (migrate) runAgainst(url, 'npx', ['prisma', 'migrate', 'deploy']);
   const prisma = new PrismaClient({ datasources: { db: { url } } });
   return {
     url,

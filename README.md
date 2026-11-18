@@ -47,8 +47,8 @@ Monorepo con npm workspaces: `apps/api`, `apps/web` y `apps/e2e`, con un único 
 ### Levantar el stack
 
 ```bash
-git clone <url-del-repositorio> cmpc-libros
-cd cmpc-libros
+git clone https://github.com/gbo-ynz/cmpc-test.git
+cd cmpc-test
 cp .env.example .env          # opcional en local: sin .env se usan los valores por defecto del compose
 docker compose up --build
 ```
@@ -63,16 +63,21 @@ El primer build tarda unos minutos. El stack está listo cuando la web responde 
 | PostgreSQL        | `localhost:5433` (usuario `cmpc`, base `cmpc_libros`)    |
 | Healthcheck       | http://localhost:3000/api/health (estado de API y de BD) |
 
-Credenciales de demostración: **`admin@cmpc.cl` / `Admin123!`**
+Credenciales de demostración (una por perfil):
+
+| Perfil        | Correo            | Contraseña    |
+| ------------- | ----------------- | ------------- |
+| Administrador | `admin@cmpc.cl`   | `Admin123!`   |
+| Usuario       | `usuario@cmpc.cl` | `Usuario123!` |
 
 ### Datos de ejemplo
 
 Al iniciar, el contenedor de la API aplica las migraciones (`prisma migrate deploy`) y ejecuta el seed, que
-carga **23 libros de ejemplo**: 8 géneros, 16 editoriales, 20 autores y 5 libros no disponibles. Con el tamaño
+carga **23 libros de ejemplo** con stock: 8 géneros, 16 editoriales, 20 autores y 5 libros sin stock (no disponibles). Con el tamaño
 de página por defecto son 3 páginas, suficiente para probar paginación, filtros y ordenamiento.
 
 - El seed es **idempotente**: los libros se cargan solo si la tabla `books` está vacía, por lo que reiniciar
-  el stack nunca duplica ni sobrescribe datos. El usuario administrador se crea siempre (`upsert`).
+  el stack nunca duplica ni sobrescribe datos. Los dos usuarios de demostración se crean siempre (`upsert`).
 - Los datos están en `apps/api/prisma/seed-data/books.js`; para modificarlos, edite ese archivo.
 
 ### Operación del stack
@@ -103,6 +108,10 @@ Hay dos archivos de ejemplo, uno por contexto. Ninguno contiene secretos reales 
 
 > Los valores por defecto del compose son **solo para uso local**. En cualquier entorno compartido defina
 > `POSTGRES_PASSWORD` y `JWT_SECRET` propios (por ejemplo: `openssl rand -base64 48`).
+>
+> Lo mismo con las cuentas de demostración: sus contraseñas son públicas a propósito (están en este README
+> y en los tests). Fuera de local, defina `SEED_ADMIN_PASSWORD` y `SEED_USER_PASSWORD` antes del primer
+> arranque, porque el seed solo crea los usuarios cuando no existen.
 
 ### API fuera de Docker (`apps/api/.env`, a partir de `apps/api/.env.example`)
 
@@ -120,6 +129,8 @@ arranca y muestra el motivo.
 | `UPLOADS_DIR`            | `uploads`               | Carpeta de las portadas subidas          |
 | `SEED_ADMIN_EMAIL`       | `admin@cmpc.cl`         | Usuario administrador creado por el seed |
 | `SEED_ADMIN_PASSWORD`    | `Admin123!`             | Contraseña de ese usuario                |
+| `SEED_USER_EMAIL`        | `usuario@cmpc.cl`       | Usuario con perfil "usuario" del seed    |
+| `SEED_USER_PASSWORD`     | `Usuario123!`           | Contraseña de ese usuario                |
 
 ### Acceso a la base de datos
 
@@ -269,7 +280,7 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 94 tests                                                   |
-| Tests unitarios de servicios y controladores (NestJS) | Jest: 119 tests (más 8 de integración con PostgreSQL real)                           |
+| Tests unitarios de servicios y controladores (NestJS) | Jest: 128 tests (más 15 de integración con PostgreSQL real)                          |
 | Cobertura de al menos 80%                             | API 100% de líneas, web 94,9%; umbrales del 80% configurados en ambas apps           |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
 | README con instalación, uso y arquitectura            | Este documento                                                                       |
@@ -389,18 +400,18 @@ devuelve un mensaje genérico.
 - La "disponibilidad" se modela como booleano (`isAvailable`); la cantidad en stock es una evolución documentada.
 - Un libro tiene exactamente un autor, una editorial y un género (el enunciado los menciona en singular).
 - Los precios están en CLP con hasta 2 decimales.
-- Todos los usuarios autenticados pueden gestionar libros (los roles `ADMIN`/`EDITOR` ya existen en el modelo, listos para RBAC).
+- Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
 - Las imágenes se guardan en un volumen de Docker; un adaptador S3 implementaría el mismo puerto `ImageStorage`.
 - No hay registro de usuarios: el enunciado pide solo login; el administrador lo crea el seed.
 
 ## Testing
 
-| Suite                          | Tests | Cobertura (líneas)                              |
-| ------------------------------ | ----- | ----------------------------------------------- |
-| API (Jest)                     | 119   | 100% (ramas 97,6%)                              |
-| Web (Vitest + Testing Library) | 94    | 94,9% (ramas 96,3%)                             |
-| Integración (Testcontainers)   | 8     | Repositorio, índices y seed sobre PostgreSQL 16 |
-| E2E (Playwright, Chromium)     | 12    | Flujos críticos                                 |
+| Suite                          | Tests | Cobertura (líneas)                                            |
+| ------------------------------ | ----- | ------------------------------------------------------------- |
+| API (Jest)                     | 128   | 100% (ramas 97,8%)                                            |
+| Web (Vitest + Testing Library) | 94    | 94,9% (ramas 96,3%)                                           |
+| Integración (Testcontainers)   | 15    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
+| E2E (Playwright, Chromium)     | 12    | Flujos críticos                                               |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).
 

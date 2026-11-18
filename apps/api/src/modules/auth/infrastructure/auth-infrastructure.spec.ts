@@ -31,16 +31,14 @@ describe('JwtTokenIssuer', () => {
     const jwt = { signAsync: jest.fn().mockResolvedValue('signed') };
     const issuer = new JwtTokenIssuer(jwt as unknown as JwtService);
 
-    await expect(issuer.issue({ id: '1', email: 'a@b.cl', role: 'EDITOR' })).resolves.toBe(
-      'signed',
-    );
-    expect(jwt.signAsync).toHaveBeenCalledWith({ sub: '1', email: 'a@b.cl', role: 'EDITOR' });
+    await expect(issuer.issue({ id: '1', email: 'a@b.cl', role: 'USER' })).resolves.toBe('signed');
+    expect(jwt.signAsync).toHaveBeenCalledWith({ sub: '1', email: 'a@b.cl', role: 'USER' });
   });
 });
 
 describe('JwtStrategy', () => {
   const config = { getOrThrow: () => 'x'.repeat(32) } as unknown as ConfigService;
-  const stored: User = { id: '1', email: 'a@b.cl', name: 'A', role: 'EDITOR', passwordHash: 'h' };
+  const stored: User = { id: '1', email: 'a@b.cl', name: 'A', role: 'USER', passwordHash: 'h' };
   const strategyWith = (user: User | null) => {
     const users = { findByEmail: jest.fn(), findById: jest.fn().mockResolvedValue(user) };
     return { strategy: new JwtStrategy(config, users), users };
@@ -52,7 +50,7 @@ describe('JwtStrategy', () => {
     await expect(strategy.validate({ sub: '1', email: 'a@b.cl', role: 'ADMIN' })).resolves.toEqual({
       id: '1',
       email: 'a@b.cl',
-      role: 'EDITOR',
+      role: 'USER',
     });
     expect(users.findById).toHaveBeenCalledWith('1');
   });

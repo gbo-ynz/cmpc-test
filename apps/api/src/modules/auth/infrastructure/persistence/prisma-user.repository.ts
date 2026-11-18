@@ -15,13 +15,14 @@ const toUser = ({ id, email, name, role, passwordHash }: UserRecord): User => ({
 export class PrismaUserRepository implements UserRepository {
   constructor(private readonly prisma: PrismaService) {}
 
+  // Deleted (deactivated) users are invisible: they cannot log in and their tokens stop working.
   async findByEmail(email: string): Promise<User | null> {
-    const record = await this.prisma.db.user.findUnique({ where: { email } });
+    const record = await this.prisma.db.user.findFirst({ where: { email, deletedAt: null } });
     return record ? toUser(record) : null;
   }
 
   async findById(id: string): Promise<User | null> {
-    const record = await this.prisma.db.user.findUnique({ where: { id } });
+    const record = await this.prisma.db.user.findFirst({ where: { id, deletedAt: null } });
     return record ? toUser(record) : null;
   }
 }

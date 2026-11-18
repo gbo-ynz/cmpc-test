@@ -11,6 +11,7 @@ import { BcryptPasswordHasher } from './infrastructure/bcrypt-password-hasher';
 import { JwtAuthGuard } from './infrastructure/jwt-auth.guard';
 import { JwtTokenIssuer } from './infrastructure/jwt-token-issuer';
 import { JwtStrategy } from './infrastructure/jwt.strategy';
+import { RolesGuard } from './infrastructure/roles.guard';
 import { PrismaUserRepository } from './infrastructure/persistence/prisma-user.repository';
 import { AuthController } from './presentation/auth.controller';
 
@@ -32,7 +33,9 @@ import { AuthController } from './presentation/auth.controller';
     { provide: UserRepository, useClass: PrismaUserRepository },
     { provide: PasswordHasher, useClass: BcryptPasswordHasher },
     { provide: TokenIssuer, useClass: JwtTokenIssuer },
+    // Order matters: authenticate first, then authorize by role.
     { provide: APP_GUARD, useClass: JwtAuthGuard },
+    { provide: APP_GUARD, useClass: RolesGuard },
   ],
 })
 export class AuthModule {}

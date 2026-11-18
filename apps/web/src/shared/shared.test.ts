@@ -6,7 +6,7 @@ import { formatDate, formatPrice } from './lib/format';
 
 const SESSION = {
   token: 'jwt',
-  user: { id: '1', email: 'a@b.cl', name: 'A', role: 'EDITOR' as const },
+  user: { id: '1', email: 'a@b.cl', name: 'A', role: 'USER' as const },
 };
 
 describe('sessionStorage', () => {

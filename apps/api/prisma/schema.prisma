@@ -18,7 +18,7 @@ datasource db {
 
 enum UserRole {
   ADMIN
-  EDITOR
+  USER
 }
 
 enum AuditAction {
@@ -28,6 +28,21 @@ enum AuditAction {
   UPLOAD_IMAGE
   EXPORT
   LOGIN
+  COMPLETE
+  CANCEL
+}
+
+enum SaleStatus {
+  PENDING
+  COMPLETED
+  CANCELLED
+}
+
+enum PaymentMethod {
+  CASH
+  DEBIT_CARD
+  CREDIT_CARD
+  TRANSFER
 }
 
 model User {
@@ -35,10 +50,13 @@ model User {
   email        String     @unique @db.VarChar(255)
   name         String     @db.VarChar(120)
   passwordHash String     @map("password_hash")
-  role         UserRole   @default(EDITOR)
+  role         UserRole   @default(USER)
   createdAt    DateTime   @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt    DateTime   @updatedAt @map("updated_at") @db.Timestamptz(3)
+  // Users are deactivated, never deleted: audit logs keep pointing to their author.
+  deletedAt    DateTime?  @map("deleted_at") @db.Timestamptz(3)
   auditLogs    AuditLog[]
+  sales        Sale[]
 
   @@map("users")
 }
@@ -73,7 +91,9 @@ model Book {
   id          String    @id @default(uuid()) @db.Uuid
   title       String    @db.VarChar(255)
   price       Decimal   @db.Decimal(12, 2)
+  // Expand phase: is_available still exists; it is replaced by stock > 0 and dropped later.
   isAvailable Boolean   @default(true) @map("is_available")
+  stock       Int       @default(0) // CHECK (stock >= 0) lives in the migration SQL
   imageUrl    String?   @map("image_url") @db.VarChar(500)
   authorId    String    @map("author_id") @db.Uuid
   publisherId String    @map("publisher_id") @db.Uuid
@@ -82,15 +102,17 @@ model Book {
   updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz(3)
   deletedAt   DateTime? @map("deleted_at") @db.Timestamptz(3)
 
-  author    Author    @relation(fields: [authorId], references: [id], onDelete: Restrict)
-  publisher Publisher @relation(fields: [publisherId], references: [id], onDelete: Restrict)
-  genre     Genre     @relation(fields: [genreId], references: [id], onDelete: Restrict)
+  author    Author     @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  publisher Publisher  @relation(fields: [publisherId], references: [id], onDelete: Restrict)
+  genre     Genre      @relation(fields: [genreId], references: [id], onDelete: Restrict)
+  saleItems SaleItem[]
 
   // Frequent filters always go together with "deleted_at IS NULL".
   @@index([deletedAt, genreId])
   @@index([deletedAt, publisherId])
   @@index([deletedAt, authorId])
   @@index([deletedAt, isAvailable])
+  @@index([deletedAt, stock])
   @@index([deletedAt, createdAt])
   @@index([price])
   @@index([title(ops: raw("gin_trgm_ops"))], type: Gin, map: "books_title_trgm_idx")
@@ -111,4 +133,41 @@ model AuditLog {
   @@index([entityType, entityId])
   @@index([userId, createdAt])
   @@map("audit_logs")
+}
+
+// A sale is PENDING until it is COMPLETED (with a payment method) or CANCELLED; both are final.
+// CHECK constraints in the migration SQL keep status, payment method and dates consistent.
+model Sale {
+  id            String         @id @default(uuid()) @db.Uuid
+  status        SaleStatus     @default(PENDING)
+  paymentMethod PaymentMethod? @map("payment_method")
+  total         Decimal        @db.Decimal(12, 2)
+  createdById   String         @map("created_by_id") @db.Uuid
+  completedAt   DateTime?      @map("completed_at") @db.Timestamptz(3)
+  cancelledAt   DateTime?      @map("cancelled_at") @db.Timestamptz(3)
+  createdAt     DateTime       @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime       @updatedAt @map("updated_at") @db.Timestamptz(3)
+
+  createdBy User       @relation(fields: [createdById], references: [id], onDelete: Restrict)
+  items     SaleItem[]
+
+  @@index([status, createdAt])
+  @@index([createdAt])
+  @@map("sales")
+}
+
+// unitPrice is a snapshot: later price changes never alter a past sale.
+model SaleItem {
+  id        String  @id @default(uuid()) @db.Uuid
+  saleId    String  @map("sale_id") @db.Uuid
+  bookId    String  @map("book_id") @db.Uuid
+  quantity  Int // CHECK (quantity > 0) lives in the migration SQL
+  unitPrice Decimal @map("unit_price") @db.Decimal(12, 2)
+
+  sale Sale @relation(fields: [saleId], references: [id], onDelete: Cascade)
+  book Book @relation(fields: [bookId], references: [id], onDelete: Restrict)
+
+  @@unique([saleId, bookId])
+  @@index([bookId])
+  @@map("sale_items")
 }

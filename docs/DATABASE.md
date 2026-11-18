@@ -8,18 +8,40 @@
 ```mermaid
 erDiagram
   users ||--o{ audit_logs : "realiza"
+  users ||--o{ sales : "registra"
   authors ||--o{ books : "escribe"
   publishers ||--o{ books : "publica"
   genres ||--o{ books : "clasifica"
+  sales ||--|{ sale_items : "contiene"
+  books ||--o{ sale_items : "se vende en"
 
   users {
     uuid id PK
     varchar email UK
     varchar name
     text password_hash
-    user_role role
+    user_role role "ADMIN | USER"
     timestamptz created_at
     timestamptz updated_at
+    timestamptz deleted_at "desactivación lógica"
+  }
+  sales {
+    uuid id PK
+    sale_status status "PENDING | COMPLETED | CANCELLED"
+    payment_method payment_method "nullable"
+    decimal total "DECIMAL(12,2)"
+    uuid created_by_id FK
+    timestamptz completed_at "nullable"
+    timestamptz cancelled_at "nullable"
+    timestamptz created_at
+    timestamptz updated_at
+  }
+  sale_items {
+    uuid id PK
+    uuid sale_id FK "CASCADE"
+    uuid book_id FK "RESTRICT"
+    int quantity "CHECK > 0"
+    decimal unit_price "precio al vender"
   }
   authors {
     uuid id PK
@@ -37,7 +59,8 @@ erDiagram
     uuid id PK
     varchar title
     decimal price "DECIMAL(12,2)"
-    boolean is_available
+    boolean is_available "en retiro: se reemplaza por stock > 0"
+    int stock "CHECK >= 0"
     varchar image_url "nullable"
     uuid author_id FK
     uuid publisher_id FK
@@ -67,6 +90,10 @@ erDiagram
 | `deleted_at` en lugar de `DELETE`                             | Soft delete: auditoría, posibilidad de deshacer, historial referencial. Toda lectura filtra `deleted_at IS NULL`.                                                          |
 | `ON DELETE RESTRICT` en las referencias del libro             | Un autor no puede desaparecer mientras haya libros que lo referencien.                                                                                                     |
 | `audit_logs.user_id ON DELETE SET NULL`                       | El registro de auditoría sobrevive a la eliminación de usuarios.                                                                                                           |
+| `users.deleted_at` en lugar de `DELETE`                       | Borrar un usuario dejaría `user_id = NULL` en su auditoría y se perdería quién hizo cada operación. Login y validación del token ignoran a los usuarios con `deleted_at`.  |
+| `stock` con `CHECK (stock >= 0)`                              | La última defensa contra stock negativo es la base: ninguna ruta de código (ni dos ventas simultáneas) puede violarla.                                                     |
+| `sale_items.unit_price` copia el precio al vender             | Cambiar el precio de un libro nunca altera una venta pasada.                                                                                                               |
+| `CHECK` de coherencia en `sales`                              | Completada ⇔ tiene método de pago y fecha de cierre; cancelada ⇔ tiene fecha de cancelación. Un estado imposible no puede guardarse.                                       |
 | Claves primarias UUID generadas por el dominio                | El agregado tiene identidad antes de persistirse (sin ida y vuelta), es seguro exponerlas en URLs y facilitan la fusión entre entornos.                                    |
 
 ### Índices (y la consulta que atiende cada uno)
@@ -79,6 +106,9 @@ erDiagram
 | `price`                                                                             | Ordenamiento por precio.                                                                                              |
 | GIN `gin_trgm_ops` en `books.title`, `authors.name`, `publishers.name`              | Búsqueda de texto libre (`ILIKE '%término%'`): un B-tree no puede atender un comodín inicial; un GIN de trigramas sí. |
 | `audit_logs (entity_type, entity_id)` / `(user_id, created_at)`                     | "Historial de este libro" y "qué hizo este usuario".                                                                  |
+| `(deleted_at, stock)`                                                               | Filtro de disponibilidad basado en stock (reemplaza a `(deleted_at, is_available)`).                                  |
+| `sales (status, created_at)` / `(created_at)`                                       | Listado de ventas filtrado por estado y ordenado por fecha.                                                           |
+| `sale_items (sale_id, book_id)` único / `(book_id)`                                 | Un libro aparece una sola vez por venta; "ventas de este libro".                                                      |
 
 ## 2. Transacciones
 
@@ -115,6 +145,18 @@ Nunca renombrar ni eliminar una columna en la misma versión que deja de usarla.
 
 Índices grandes en producción: crearlos con `CREATE INDEX CONCURRENTLY` en una migración editada a mano
 (Prisma permite editar el SQL generado antes de aplicarlo).
+
+### Historial de migraciones
+
+| Migración                                 | Qué hace                                                                                                                                                         | Cómo se verificó                                                                                                                   |
+| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `20261117000000_init`                     | Modelo inicial, `pg_trgm` e índices                                                                                                                              | `database-indexes.int-spec.ts`                                                                                                     |
+| `20261118000000_roles_stock_sales_expand` | **Expandir**: `EDITOR` → `USER`, `users.deleted_at`, `books.stock` (calculado desde `is_available`), tablas `sales` y `sale_items`, acciones `COMPLETE`/`CANCEL` | `migrations.int-spec.ts` (datos escritos con el esquema inicial sobreviven) + `prisma migrate diff`: sin diferencias con el schema |
+
+La segunda migración se escribió a mano porque Prisma traduce el renombre de un valor de enum como "borrar y
+recrear", lo que perdería los usuarios con ese rol; `ALTER TYPE … RENAME VALUE` conserva cada fila. Después
+de editar a mano, `prisma migrate diff --from-migrations … --to-schema-datamodel …` debe responder
+`No difference detected`. La fase de **contraer** (eliminar `is_available`) llega cuando ningún código lo lea.
 
 ## 4. Portabilidad: ¿qué tan difícil es cambiar la base de datos o el ORM?
 

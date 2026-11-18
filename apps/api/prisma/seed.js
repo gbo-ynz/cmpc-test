@@ -4,30 +4,46 @@ const bcrypt = require('bcryptjs');
 
 const prisma = new PrismaClient();
 
-const ADMIN_EMAIL = process.env.SEED_ADMIN_EMAIL ?? 'admin@cmpc.cl';
-const ADMIN_PASSWORD = process.env.SEED_ADMIN_PASSWORD ?? 'Admin123!';
+// One demo account per role (credentials overridable through the environment).
+const DEMO_USERS = [
+  {
+    email: process.env.SEED_ADMIN_EMAIL ?? 'admin@cmpc.cl',
+    password: process.env.SEED_ADMIN_PASSWORD ?? 'Admin123!',
+    name: 'Administrador',
+    role: 'ADMIN',
+  },
+  {
+    email: process.env.SEED_USER_EMAIL ?? 'usuario@cmpc.cl',
+    password: process.env.SEED_USER_PASSWORD ?? 'Usuario123!',
+    name: 'Usuario',
+    role: 'USER',
+  },
+];
 
 const BOOKS = require('./seed-data/books');
 
 const connect = (name) => ({ connectOrCreate: { where: { name }, create: { name } } });
 
-async function seedAdmin() {
-  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 10);
-  await prisma.user.upsert({
-    where: { email: ADMIN_EMAIL },
-    update: {},
-    create: { email: ADMIN_EMAIL, name: 'Administrator', passwordHash, role: 'ADMIN' },
-  });
+async function seedUsers() {
+  for (const { email, password, name, role } of DEMO_USERS) {
+    const passwordHash = await bcrypt.hash(password, 10);
+    await prisma.user.upsert({
+      where: { email },
+      update: {},
+      create: { email, name, passwordHash, role },
+    });
+  }
 }
 
 async function seedBooks() {
   if ((await prisma.book.count()) > 0) return;
-  for (const [title, author, publisher, genre, price, isAvailable] of BOOKS) {
+  for (const [title, author, publisher, genre, price, stock] of BOOKS) {
     await prisma.book.create({
       data: {
         title,
         price,
-        isAvailable,
+        stock,
+        isAvailable: stock > 0, // expand phase: kept in sync until is_available is dropped
         author: connect(author),
         publisher: connect(publisher),
         genre: connect(genre),
@@ -36,7 +52,7 @@ async function seedBooks() {
   }
 }
 
-seedAdmin()
+seedUsers()
   .then(seedBooks)
   .then(() => console.log('Seed completed'))
   .catch((error) => {
