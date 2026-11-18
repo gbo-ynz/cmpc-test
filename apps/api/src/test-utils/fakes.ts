@@ -1,3 +1,4 @@
+import type { PasswordHasher } from '../modules/auth/application/ports/password-hasher.port';
 import type { AuditEntry, AuditLogger } from '../shared/application/audit-logger.port';
 import type { TransactionManager } from '../shared/application/transaction-manager.port';
 import type {
@@ -79,3 +80,14 @@ export function seededReferences(): InMemoryReferenceRepository {
 }
 
 export const ACTOR_ID = '6f1c1d9e-1111-4c2a-9a59-0b1f6b9c0001';
+
+/** Deterministic hasher: "secret123" hashes to "hash:secret123" and verifies against it. */
+export class FakePasswordHasher implements PasswordHasher {
+  async hash(plain: string): Promise<string> {
+    return `hash:${plain}`;
+  }
+
+  async verify(plain: string, hash: string | undefined): Promise<boolean> {
+    return hash === `hash:${plain}`;
+  }
+}

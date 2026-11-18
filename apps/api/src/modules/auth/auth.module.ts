@@ -27,6 +27,8 @@ import { AuthController } from './presentation/auth.controller';
     }),
   ],
   controllers: [AuthController],
+  // The users administration hashes the passwords it stores.
+  exports: [PasswordHasher],
   providers: [
     LoginUseCase,
     JwtStrategy,

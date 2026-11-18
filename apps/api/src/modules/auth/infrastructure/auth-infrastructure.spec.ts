@@ -17,6 +17,14 @@ describe('BcryptPasswordHasher', () => {
     await expect(hasher.verify('Admin123!', hash)).resolves.toBe(true);
   });
 
+  it('hashes a password into something verify accepts, never storing it in plain text', async () => {
+    const stored = await hasher.hash('Admin123!');
+
+    expect(stored).not.toContain('Admin123!');
+    await expect(hasher.verify('Admin123!', stored)).resolves.toBe(true);
+    await expect(hasher.verify('other', stored)).resolves.toBe(false);
+  });
+
   it('rejects a wrong password', async () => {
     await expect(hasher.verify('nope', hash)).resolves.toBe(false);
   });

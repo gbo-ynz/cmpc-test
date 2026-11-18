@@ -8,6 +8,7 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BooksModule } from './modules/books/books.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { ReferencesModule } from './modules/references/references.module';
+import { UsersModule } from './modules/users/users.module';
 import { AllExceptionsFilter } from './shared/infrastructure/http/all-exceptions.filter';
 import { HealthController } from './shared/infrastructure/http/health.controller';
 import { RequestLoggingInterceptor } from './shared/infrastructure/http/request-logging.interceptor';
@@ -26,6 +27,7 @@ const RATE_LIMIT = { ttl: 60_000, limit: 120 };
     BooksModule,
     CatalogModule,
     ReferencesModule,
+    UsersModule,
   ],
   controllers: [HealthController],
   providers: [

@@ -17,7 +17,10 @@ function setup(user: User | null, isValidPassword: boolean) {
     findByEmail: jest.fn().mockResolvedValue(user),
     findById: jest.fn(),
   };
-  const hasher: PasswordHasher = { verify: jest.fn().mockResolvedValue(isValidPassword) };
+  const hasher: PasswordHasher = {
+    hash: jest.fn(),
+    verify: jest.fn().mockResolvedValue(isValidPassword),
+  };
   const tokens: TokenIssuer = { issue: jest.fn().mockResolvedValue('jwt-token') };
   const audit = new FakeAuditLogger();
   return { useCase: new LoginUseCase(users, hasher, tokens, audit), users, hasher, audit };
