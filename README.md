@@ -427,7 +427,7 @@ devuelve un mensaje genérico.
 - Los precios están en CLP con hasta 2 decimales.
 - Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
 - Las imágenes se guardan en un volumen de Docker; un adaptador S3 implementaría el mismo puerto `ImageStorage`.
-- No hay registro de usuarios: el enunciado pide solo login; el administrador lo crea el seed.
+- No hay autorregistro: el enunciado pide solo login, y las cuentas las crean los administradores desde la pantalla de usuarios. El primer administrador lo crea el seed.
 
 ## Testing
 

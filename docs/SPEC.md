@@ -277,7 +277,7 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 ## Ampliación: administración y perfiles
 
-Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) y exportación de catálogos ✅ (RF-21); ventas, usuarios y dashboard 🛠 (fases 3 a 5).
+Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) exportación de catálogos ✅ (RF-21) y administración de usuarios ✅ (RF-10); ventas y dashboard 🛠 (fases 3 a 5).
 
 ### Perfiles y permisos
 
@@ -301,17 +301,21 @@ Requisitos agregados después del enunciado (no forman parte de la prueba origin
 | 4   | Muestra las últimas 10 operaciones de auditoría (acción, entidad, usuario y fecha)                                                           |
 | 5   | Un usuario que intenta abrirlo ve "No tiene permisos para ver esta página"; la API responde 403                                              |
 
-### RF-10 · Administración de usuarios 🛠
+### RF-10 · Administración de usuarios ✅
 
-| CA  | Criterio de aceptación                                                                                                                                                |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | El listado muestra nombre, correo y perfil (Administrador o Usuario)                                                                                                  |
-| 2   | Crear exige nombre, correo válido y único, perfil y contraseña de al menos 8 caracteres; un correo repetido responde 409                                              |
-| 3   | Editar permite cambiar nombre, correo y perfil; la contraseña es opcional y solo se cambia si se completa                                                             |
-| 4   | La contraseña se guarda con bcrypt y nunca se devuelve en ninguna respuesta                                                                                           |
-| 5   | Eliminar es una desactivación lógica (`deleted_at`): conserva la autoría en la auditoría; el usuario ya no puede iniciar sesión y sus tokens vigentes dejan de servir |
-| 6   | Un administrador no puede eliminarse ni quitarse el perfil de administrador a sí mismo, y siempre debe quedar al menos un administrador activo (409)                  |
-| 7   | Crear, editar y eliminar quedan en `audit_logs`                                                                                                                       |
+Verificado por: API `users.spec.ts` (alta normalizada y con hash, auditoría sin contraseña, correo repetido incluso de un usuario desactivado, contraseña opcional al editar, no eliminarse ni quitarse el perfil, último administrador), `users.http.spec.ts` (permisos 401/403, 400/404/409, la contraseña nunca aparece en una respuesta, paginación), `auth-infrastructure.spec.ts` › "hashes a password…"; INT `prisma-managed-user.repository.int-spec.ts`, `prisma-user.repository.int-spec.ts` (los desactivados no inician sesión); WEB `users.test.tsx`, `users.api.test.ts`, `auth.test.tsx` › menú del administrador; E2E `users.spec.ts` (el usuario creado inicia sesión y, al eliminarlo, su token deja de servir).
+
+| CA  | Criterio de aceptación                                                                                                                                                                                                                                                                       |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | El listado muestra nombre, correo y perfil (Administrador o Usuario)                                                                                                                                                                                                                         |
+| 2   | Crear exige nombre, correo válido y único, perfil y contraseña de al menos 8 caracteres; un correo repetido responde 409                                                                                                                                                                     |
+| 3   | Editar permite cambiar nombre, correo y perfil; la contraseña es opcional y solo se cambia si se completa                                                                                                                                                                                    |
+| 4   | La contraseña se guarda con bcrypt y nunca se devuelve en ninguna respuesta                                                                                                                                                                                                                  |
+| 5   | Eliminar es una desactivación lógica (`deleted_at`): conserva la autoría en la auditoría; el usuario ya no puede iniciar sesión y sus tokens vigentes dejan de servir                                                                                                                        |
+| 6   | Un administrador no puede eliminarse ni quitarse el perfil de administrador a sí mismo, y siempre debe quedar al menos un administrador activo (409)                                                                                                                                         |
+| 7   | Crear, editar y eliminar quedan en `audit_logs`                                                                                                                                                                                                                                              |
+| 8   | La pantalla de usuarios sigue la estructura de los catálogos: tabla (Nombre, Correo electrónico, Perfil, Acciones), "Agregar" abre "Nuevo usuario" y el lápiz abre "Editar usuario" con los datos cargados; el administrador en sesión no ve el botón de eliminar y su perfil está bloqueado |
+| 9   | La tabla pagina **en el servidor** (RF-04): `GET /users?page&limit` (por defecto página 1 de 10; `limit` > 100 o `page` < 1 responde 400); solo administradores (403 para un usuario)                                                                                                        |
 
 ### RF-11 a RF-13 · Administración de autores, editoriales y géneros ✅
 
@@ -443,7 +447,7 @@ Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts
 - Un libro tiene exactamente un autor, una editorial y un género.
 - Los precios están en CLP con hasta 2 decimales.
 - Dos perfiles: administrador (`ADMIN`) y usuario (`USER`); ver la matriz de permisos de la ampliación.
-- No hay registro de usuarios: el enunciado pide solo login; el administrador lo crea el seed.
+- No hay autorregistro: el enunciado pide solo login, y las cuentas las crean los administradores desde la pantalla de usuarios (RF-10). El primer administrador lo crea el seed.
 
 ## Fuera del alcance
 

@@ -9,6 +9,7 @@ const ADMIN_ONLY: readonly NavItem[] = [
   { to: '/authors', label: 'Autores' },
   { to: '/publishers', label: 'Editoriales' },
   { to: '/genres', label: 'Géneros' },
+  { to: '/users', label: 'Usuarios' },
 ];
 
 /** Container: wires the auth feature into the presentational layout (menu depends on the role). */

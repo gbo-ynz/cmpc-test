@@ -149,7 +149,7 @@ describe('AuthenticatedLayout menu', () => {
   it('shows the administration sections to an administrator', () => {
     renderWithProviders(<AuthenticatedLayout />, { route: '/books', path: '/books' });
 
-    for (const section of ['Inventario', 'Autores', 'Editoriales', 'Géneros']) {
+    for (const section of ['Inventario', 'Autores', 'Editoriales', 'Géneros', 'Usuarios']) {
       expect(within(menu()).getByRole('link', { name: section })).toBeInTheDocument();
     }
   });

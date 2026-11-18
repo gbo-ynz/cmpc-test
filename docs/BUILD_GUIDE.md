@@ -88,7 +88,7 @@ Los puertos son `abstract class`: funcionan como interfaces de TypeScript **y** 
 | `ImageStorage`            | `save(image): Promise<url>`, `remove(url)`                                         | `LocalImageStorage`, `FakeImageStorage` (tests) — un adaptador S3 es el camino a la nube |
 | `TransactionManager`      | `run<T>(work): Promise<T>`                                                         | `PrismaTransactionManager` (ALS), `FakeTransactionManager`                               |
 | `AuditLogger`             | `record(entry)`                                                                    | `PrismaAuditLogger`, `FakeAuditLogger`                                                   |
-| `PasswordHasher`          | `verify(plain, hash \| undefined)`                                                 | `BcryptPasswordHasher` (tiempo constante incluso para usuarios inexistentes)             |
+| `PasswordHasher`          | `hash(plain)`, `verify(plain, hash \| undefined)`                                  | `BcryptPasswordHasher` (tiempo constante incluso para usuarios inexistentes)             |
 | `TokenIssuer`             | `issue(user): Promise<string>`                                                     | `JwtTokenIssuer`                                                                         |
 | `BooksGateway` (frontend) | `list`, `get`, `create`, `update`, `remove`, `uploadImage`, `exportCsv`, `catalog` | `booksApi` (axios), `vi.mock` en los tests                                               |
 

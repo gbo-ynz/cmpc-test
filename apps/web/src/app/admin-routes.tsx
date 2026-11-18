@@ -2,6 +2,7 @@ import type { RouteObject } from 'react-router-dom';
 import { AuthorsPage } from '../features/authors/ui/AuthorsPage';
 import { GenresPage } from '../features/genres/ui/GenresPage';
 import { PublishersPage } from '../features/publishers/ui/PublishersPage';
+import { UsersPage } from '../features/users/ui/UsersPage';
 import { lazyPage } from './lazy-page';
 
 /** Catalog administration: only reachable by administrators (see RequireRole in the router). */
@@ -32,5 +33,14 @@ export const adminRoutes: RouteObject[] = [
   {
     path: 'genres/:id/edit',
     lazy: lazyPage(() => import('../features/genres/ui/GenreEditPage')),
+  },
+  { path: 'users', element: <UsersPage /> },
+  {
+    path: 'users/new',
+    lazy: lazyPage(() => import('../features/users/ui/UserCreatePage')),
+  },
+  {
+    path: 'users/:id/edit',
+    lazy: lazyPage(() => import('../features/users/ui/UserEditPage')),
   },
 ];
