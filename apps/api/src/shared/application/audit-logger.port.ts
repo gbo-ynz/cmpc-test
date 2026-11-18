@@ -1,4 +1,5 @@
-export type AuditAction = 'CREATE' | 'UPDATE' | 'DELETE' | 'UPLOAD_IMAGE' | 'EXPORT' | 'LOGIN';
+export type AuditAction =
+  'CREATE' | 'UPDATE' | 'DELETE' | 'UPLOAD_IMAGE' | 'EXPORT' | 'LOGIN' | 'COMPLETE' | 'CANCEL';
 
 export interface AuditEntry {
   readonly action: AuditAction;
