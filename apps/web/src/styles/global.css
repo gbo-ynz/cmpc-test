@@ -724,3 +724,6 @@ a.icon-button {
   flex-wrap: wrap;
   gap: var(--space);
 }
+.confirm .field__control {
+  width: auto;
+}

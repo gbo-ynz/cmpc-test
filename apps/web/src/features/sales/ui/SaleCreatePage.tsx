@@ -15,8 +15,8 @@ export default function SaleCreatePage() {
 
   const submit = async () => {
     try {
-      const sale = await create.mutateAsync(toSaleInput(lines));
-      navigate(`/sales/${sale.id}`);
+      await create.mutateAsync(toSaleInput(lines));
+      navigate('/sales');
     } catch {
       // Rendered below from create.error.
     }

@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 
 /** Inline stroke icons (no icon dependency); they inherit the text color. */
-function Icon({ children }: { children: ReactNode }) {
+export function Icon({ children }: { children: ReactNode }) {
   return (
     <svg
       width="18"

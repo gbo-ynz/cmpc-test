@@ -400,13 +400,14 @@ Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts
 
 Verificado por: API `sale-builder.spec.ts` (snapshot de precios, total en centavos, líneas repetidas, libros inactivos, cantidad ≤ stock), `sales.spec.ts`, `sales.http.spec.ts` (permisos, 201/400/404, paginación y filtro por estado); INT `prisma-sale.repository.int-spec.ts`; WEB `sales.test.tsx` (listado, filtro, nueva venta con cantidad limitada por stock), `sale-draft.test.ts`, `sales.api.test.ts`; E2E `sales.spec.ts`.
 
-| CA  | Criterio de aceptación                                                                                                                                    |
-| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Una venta tiene una o más líneas (libro y cantidad ≥ 1); cada línea guarda el precio unitario del libro al momento de crearla, y la venta guarda el total |
-| 2   | Al crearla queda en estado **Pendiente**, registra quién la creó y no descuenta stock (una venta pendiente no reserva unidades)                           |
-| 3   | Solo se pueden agregar libros activos, sin repetir un libro en dos líneas, y con cantidad no mayor al stock actual; si no, responde 400                   |
-| 4   | El listado de ventas tiene paginación del lado del servidor y filtro por estado, y muestra fecha, total, estado y quién la creó                           |
-| 5   | El detalle muestra las líneas, el total, el estado y, según el estado, las acciones disponibles                                                           |
+| CA  | Criterio de aceptación                                                                                                                                                                                                           |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Una venta tiene una o más líneas (libro y cantidad ≥ 1); cada línea guarda el precio unitario del libro al momento de crearla, y la venta guarda el total                                                                        |
+| 2   | Al crearla queda en estado **Pendiente**, registra quién la creó y no descuenta stock (una venta pendiente no reserva unidades)                                                                                                  |
+| 3   | Solo se pueden agregar libros activos, sin repetir un libro en dos líneas, y con cantidad no mayor al stock actual; si no, responde 400                                                                                          |
+| 4   | El listado de ventas tiene paginación del lado del servidor y filtro por estado, y muestra fecha, total, estado y quién la creó                                                                                                  |
+| 5   | El detalle muestra las líneas, el total, el estado y, según el estado, las acciones disponibles                                                                                                                                  |
+| 6   | Al crear la venta se vuelve al listado; en **Acciones** cada venta tiene un ojo (ver el detalle) y, solo si está pendiente, un ticket (completar: pide el método de pago en la misma fila) y una X (cancelar: pide confirmación) |
 
 ### RF-17 · Completar y cancelar ventas ✅
 

@@ -16,6 +16,10 @@ export const PAYMENT_METHOD_LABELS: Record<PaymentMethod, string> = {
   TRANSFER: 'Transferencia',
 };
 
+export const PAYMENT_METHOD_OPTIONS = Object.entries(PAYMENT_METHOD_LABELS).map(
+  ([value, label]) => ({ value, label }),
+);
+
 export interface SaleLine {
   readonly bookId: string;
   readonly title: string;

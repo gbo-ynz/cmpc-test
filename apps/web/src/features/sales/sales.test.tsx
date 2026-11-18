@@ -82,6 +82,49 @@ describe('SalesPage', () => {
     expect(screen.getByRole('link', { name: 'Nueva venta' })).toHaveAttribute('href', '/sales/new');
   });
 
+  it('offers view, complete and cancel icons on a pending sale, and only view on a final one', async () => {
+    const DONE = {
+      ...SUMMARY,
+      id: 's2',
+      status: 'COMPLETED',
+      createdBy: { id: 'u2', name: 'Otra' },
+    } as const;
+    sales.listPage.mockResolvedValue(pageOf([SUMMARY, DONE]));
+    renderWithProviders(<SalesPage />);
+
+    const pending = await screen.findByRole('row', { name: /Vendedora/ });
+    const done = screen.getByRole('row', { name: /Otra/ });
+
+    expect(within(pending).getByRole('link', { name: /^Ver venta/ })).toBeInTheDocument();
+    expect(within(pending).getByRole('button', { name: /^Completar venta/ })).toBeInTheDocument();
+    expect(within(pending).getByRole('button', { name: /^Cancelar venta/ })).toBeInTheDocument();
+    expect(within(done).getByRole('link', { name: /^Ver venta/ })).toBeInTheDocument();
+    expect(within(done).queryByRole('button')).not.toBeInTheDocument();
+  });
+
+  it('completes from the list: the ticket asks for the payment method first', async () => {
+    sales.complete.mockResolvedValue({ ...SALE, status: 'COMPLETED', paymentMethod: 'CASH' });
+    renderWithProviders(<SalesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Completar venta/ }));
+
+    expect(screen.getByRole('button', { name: 'Completar' })).toBeDisabled();
+    await userEvent.selectOptions(screen.getByLabelText('Método de pago'), 'CASH');
+    await userEvent.click(screen.getByRole('button', { name: 'Completar' }));
+
+    await waitFor(() => expect(sales.complete).toHaveBeenCalledWith('s1', 'CASH'));
+  });
+
+  it('cancels from the list only after confirming', async () => {
+    sales.cancel.mockResolvedValue({ ...SALE, status: 'CANCELLED' });
+    renderWithProviders(<SalesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Cancelar venta/ }));
+
+    expect(sales.cancel).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, cancelar' }));
+
+    await waitFor(() => expect(sales.cancel).toHaveBeenCalledWith('s1'));
+  });
+
   it('filters by status on the server and goes back to the first page', async () => {
     sales.listPage.mockImplementation(async ({ page, limit }) =>
       pageOf([SUMMARY], page, limit, 25),
@@ -136,18 +179,18 @@ describe('SaleCreatePage', () => {
     expect(screen.getByRole('button', { name: 'Crear venta' })).toBeDisabled();
   });
 
-  it('creates the sale and opens its detail', async () => {
+  it('creates the sale and goes back to the sales list', async () => {
     sales.create.mockResolvedValue(SALE);
     renderWithProviders(<SaleCreatePage />, {
       route: '/sales/new',
       path: '/sales/new',
-      extraRoutes: { '/sales/:id': <p>Detalle de venta</p> },
+      extraRoutes: { '/sales': <p>Listado de ventas</p> },
     });
     await addRayuela();
     await userEvent.click(screen.getByRole('button', { name: 'Crear venta' }));
 
     await waitFor(() => expect(sales.create).toHaveBeenCalledWith([{ bookId: 'b1', quantity: 1 }]));
-    expect(await screen.findByText('Detalle de venta')).toBeInTheDocument();
+    expect(await screen.findByText('Listado de ventas')).toBeInTheDocument();
   });
 
   it('keeps the lines and explains the error when the API rejects the sale', async () => {

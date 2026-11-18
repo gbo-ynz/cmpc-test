@@ -3,10 +3,8 @@ import { errorText } from '../../../shared/api/api-error';
 import { Button } from '../../../shared/ui/Button';
 import { SelectField } from '../../../shared/ui/SelectField';
 import { useCompleteSale } from '../application/sale-hooks';
-import { PAYMENT_METHOD_LABELS, type PaymentMethod } from '../domain/sale.types';
+import { PAYMENT_METHOD_OPTIONS, type PaymentMethod } from '../domain/sale.types';
 import { CANNOT_COMPLETE, NOT_PENDING } from './sale-copy';
-
-const OPTIONS = Object.entries(PAYMENT_METHOD_LABELS).map(([value, label]) => ({ value, label }));
 
 /** Completing needs a payment method; it discounts the stock of every line (RF-17). */
 export function CompleteSalePanel({ saleId }: { saleId: string }) {
@@ -19,7 +17,7 @@ export function CompleteSalePanel({ saleId }: { saleId: string }) {
         label="Método de pago"
         placeholder="Seleccione un método"
         value={method}
-        options={OPTIONS}
+        options={PAYMENT_METHOD_OPTIONS}
         onValueChange={(value) => setMethod(value as PaymentMethod | '')}
       />
       <Button
