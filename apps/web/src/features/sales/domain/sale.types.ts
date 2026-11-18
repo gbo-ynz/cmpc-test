@@ -32,7 +32,8 @@ export interface SaleSummary {
   readonly id: string;
   readonly status: SaleStatus;
   readonly total: number;
-  readonly itemCount: number;
+  /** Units sold: two copies of one book count 2, not 1. */
+  readonly unitCount: number;
   readonly createdAt: string;
   readonly createdBy: { readonly id: string; readonly name: string };
 }

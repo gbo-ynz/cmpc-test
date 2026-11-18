@@ -22,6 +22,7 @@ test('creating a sale lands on the list; completing it discounts the stock and m
   await createSale(page, book, '2');
   const row = latestSaleRow(page);
   await expect(row).toContainText('$5.000');
+  await expect(row.getByRole('cell').nth(1)).toHaveText('2'); // units, not distinct books
   await expectStock(page, bookId, book, '3 unidades');
 
   await page.goto('/sales');

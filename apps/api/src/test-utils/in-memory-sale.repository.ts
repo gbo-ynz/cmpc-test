@@ -37,7 +37,7 @@ export class InMemorySaleRepository extends SaleRepository {
       status: 'PENDING',
       paymentMethod: null,
       total,
-      itemCount: items.length,
+      unitCount: items.reduce((units, line) => units + line.quantity, 0),
       createdAt: new Date(2026, 0, 1, 0, 0, this.clock),
       completedAt: null,
       cancelledAt: null,

@@ -9,7 +9,7 @@ export const SUMMARY_SELECT = {
   total: true,
   createdAt: true,
   createdBy: CREATOR,
-  _count: { select: { items: true } },
+  items: { select: { quantity: true } },
 } as const satisfies Prisma.SaleSelect;
 
 export const DETAIL_SELECT = {
@@ -36,7 +36,7 @@ export const toSummary = (row: SummaryRow): SaleSummary => ({
   id: row.id,
   status: row.status,
   total: row.total.toNumber(),
-  itemCount: row._count.items,
+  unitCount: row.items.reduce((units, line) => units + line.quantity, 0),
   createdAt: row.createdAt,
   createdBy: row.createdBy,
 });

@@ -11,7 +11,7 @@ export function SaleRow({ sale }: { sale: SaleSummary }) {
   return (
     <tr>
       <td>{formatDate(sale.createdAt)}</td>
-      <td className="table__number">{sale.itemCount}</td>
+      <td className="table__number">{sale.unitCount}</td>
       <td className="table__number">{formatPrice(sale.total)}</td>
       <td>
         <SaleStatusBadge status={sale.status} />

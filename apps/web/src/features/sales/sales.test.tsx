@@ -38,7 +38,7 @@ const SUMMARY: SaleSummary = {
   id: 's1',
   status: 'PENDING',
   total: 3000,
-  itemCount: 1,
+  unitCount: 2,
   createdAt: '2026-03-10T12:00:00Z',
   createdBy: { id: 'u1', name: 'Vendedora' },
 };
@@ -67,6 +67,7 @@ describe('SalesPage', () => {
     const row = await screen.findByRole('row', { name: /Vendedora/ });
     expect(within(row).getByText('Pendiente')).toBeInTheDocument();
     expect(within(row).getByText('$3.000')).toBeInTheDocument();
+    expect(within(row).getByText('2', { selector: 'td' })).toBeInTheDocument();
     expect(screen.getAllByRole('columnheader').map((header) => header.textContent)).toEqual([
       'Fecha',
       'Productos',

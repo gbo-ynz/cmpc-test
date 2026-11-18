@@ -56,3 +56,14 @@ it('only moves a pending sale: the second transition finds nothing to do', async
   expect(second).toBeNull();
   expect(await sales.markCancelled(sale.id, new Date())).toBeNull();
 });
+
+it('counts the units of the sale in the list, not the distinct books', async () => {
+  const a = await env.addBook('Dos unidades', 9);
+  const b = await env.addBook('Una unidad', 9);
+  const created = await newSale({ bookId: a.id, quantity: 2 }, { bookId: b.id, quantity: 1 });
+
+  const { items } = await sales.listPage({ page: 1, limit: 50 });
+
+  expect(items.find((sale) => sale.id === created.id)?.unitCount).toBe(3);
+  expect((await sales.findById(created.id))?.unitCount).toBe(3);
+});

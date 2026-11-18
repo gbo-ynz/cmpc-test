@@ -152,6 +152,16 @@ describe('sale queries', () => {
     expect(cancelled.items.map((sale) => sale.id)).toEqual([first.id]);
   });
 
+  it('counts units, not distinct books: two copies of one book are 2', async () => {
+    const a = stock.seed({ stock: 10 });
+    const b = stock.seed({ stock: 10 });
+    await sell({ bookId: a.id, quantity: 2 }, { bookId: b.id, quantity: 1 });
+
+    const page = await new ListSalesPageUseCase(sales).execute({ page: 1, limit: 10 });
+
+    expect(page.items[0].unitCount).toBe(3);
+  });
+
   it('returns one sale with its lines, or not found', async () => {
     const book = stock.seed({ title: 'Ficciones' });
     const sale = await sell({ bookId: book.id, quantity: 1 });
