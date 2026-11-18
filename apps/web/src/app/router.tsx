@@ -1,5 +1,4 @@
-import { createBrowserRouter, type RouteObject } from 'react-router-dom';
-import { HomeRedirect } from '../features/auth/ui/HomeRedirect';
+import { Navigate, createBrowserRouter, type RouteObject } from 'react-router-dom';
 import { LoginPage } from '../features/auth/ui/LoginPage';
 import { RequireAuth } from '../features/auth/ui/RequireAuth';
 import { RequireRole } from '../features/auth/ui/RequireRole';
@@ -21,7 +20,7 @@ export const routes: RouteObject[] = [
       {
         element: <AuthenticatedLayout />,
         children: [
-          { index: true, element: <HomeRedirect /> },
+          { index: true, element: <Navigate to="/dashboard" replace /> },
           { path: 'dashboard', element: <DashboardPage /> },
           { path: 'books', element: <BooksListPage /> },
           {

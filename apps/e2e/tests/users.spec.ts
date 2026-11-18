@@ -38,7 +38,7 @@ test('an administrator creates a user who can sign in, edits it and deactivates 
   const login = new LoginPage(newcomer);
   await login.goto();
   await login.login(email, password);
-  await expect(newcomer).toHaveURL(/\/books/);
+  await expect(newcomer).toHaveURL(/\/dashboard$/);
 
   await page.getByRole('button', { name: `Eliminar ${name} editado`, exact: true }).click();
   await page.getByRole('button', { name: 'Sí, eliminar' }).click();

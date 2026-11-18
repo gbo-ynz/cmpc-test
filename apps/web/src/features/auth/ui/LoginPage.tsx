@@ -3,8 +3,9 @@ import cmpcLogo from '../../../assets/cmpc-logo.png';
 import { useAuth } from '../application/useAuth';
 import { LoginForm } from './LoginForm';
 
-// The index route sends each profile to its own home (dashboard or inventory).
-const DEFAULT_REDIRECT = '/';
+// After a normal login everybody lands on the dashboard; a protected route that sent the user
+// to the login (e.g. an expired session) takes precedence, so they return to where they were.
+const DEFAULT_REDIRECT = '/dashboard';
 
 export function LoginPage() {
   const { user } = useAuth();

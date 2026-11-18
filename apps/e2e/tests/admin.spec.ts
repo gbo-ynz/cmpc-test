@@ -1,4 +1,5 @@
 import { expect, test } from '@playwright/test';
+import { showRow } from '../support/paged-table';
 import { LoginPage } from '../support/pages/login.page';
 import { REGULAR_USER } from '../support/session';
 
@@ -13,6 +14,7 @@ test('an administrator creates, edits and deletes a genre', async ({ page }) => 
   await page.getByLabel('Nombre').fill(name);
   await page.getByLabel('Descripción').fill('Obras de prueba.');
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
+  await showRow(page, new RegExp(name));
   await expect(row()).toContainText('Obras de prueba.');
 
   await page.getByRole('link', { name: `Editar ${name}`, exact: true }).click();
@@ -23,6 +25,7 @@ test('an administrator creates, edits and deletes a genre', async ({ page }) => 
   await expect(page.getByText('Los cambios se guardaron correctamente.')).toBeVisible();
 
   await page.getByRole('link', { name: '← Volver a géneros' }).click();
+  await showRow(page, new RegExp(name));
   await expect(row()).toContainText('Obras de prueba editadas.');
   await page.getByRole('button', { name: `Eliminar ${name}`, exact: true }).click();
   await page.getByRole('button', { name: 'Sí, eliminar' }).click();
@@ -31,6 +34,7 @@ test('an administrator creates, edits and deletes a genre', async ({ page }) => 
 
 test('a genre that still has books cannot be deleted', async ({ page }) => {
   await page.goto('/genres');
+  await showRow(page, /Novela/);
 
   await page.getByRole('button', { name: 'Eliminar Novela', exact: true }).click();
   await page.getByRole('button', { name: 'Sí, eliminar' }).click();
@@ -50,7 +54,7 @@ test.describe('regular user', () => {
     await login.goto();
     await login.login(REGULAR_USER.email, REGULAR_USER.password);
 
-    await expect(page).toHaveURL(/\/books$/); // a regular user lands on the inventory
+    await expect(page).toHaveURL(/\/dashboard$/); // every profile lands on the dashboard
     const menu = page.getByRole('navigation', { name: 'Principal' });
     await expect(menu.getByRole('link')).toHaveText(['Dashboard', 'Inventario', 'Ventas']);
     await page.goto('/authors');

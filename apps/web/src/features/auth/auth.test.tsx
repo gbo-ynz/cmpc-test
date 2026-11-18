@@ -9,10 +9,10 @@ import { SESSION_EXPIRED_EVENT, httpClient } from '../../shared/api/http-client'
 import { sessionStorage } from '../../shared/auth/session-storage';
 import { fakeAuth, renderWithProviders } from '../../test/render';
 import { AuthProvider } from './application/AuthProvider';
+import { AuthContext } from './application/auth-context';
 import { useAuth } from './application/useAuth';
 import { credentialsSchema } from './domain/auth.types';
 import { authApi } from './infrastructure/auth.api';
-import { HomeRedirect } from './ui/HomeRedirect';
 import { LoginPage } from './ui/LoginPage';
 import { RequireAuth } from './ui/RequireAuth';
 
@@ -86,13 +86,13 @@ describe('LoginPage', () => {
     expect(await screen.findByText('Ingrese su correo electrónico')).toBeInTheDocument();
   });
 
-  it('signs in and goes to the home route (each profile lands on its own screen)', async () => {
+  it('signs in and lands on the dashboard', async () => {
     const login = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(<LoginPage />, {
       route: '/login',
       path: '/login',
       auth: { user: null, login },
-      extraRoutes: { '/': <p>Pantalla de inicio</p> },
+      extraRoutes: { '/dashboard': <p>Pantalla de inicio</p> },
     });
 
     await userEvent.type(screen.getByLabelText('Correo electrónico'), USER.email);
@@ -124,31 +124,39 @@ describe('LoginPage', () => {
     renderWithProviders(<LoginPage />, {
       route: '/login',
       path: '/login',
-      extraRoutes: { '/': <p>Pantalla de inicio</p> },
+      extraRoutes: { '/dashboard': <p>Pantalla de inicio</p> },
     });
 
     expect(screen.getByText('Pantalla de inicio')).toBeInTheDocument();
   });
 });
 
-describe('HomeRedirect', () => {
-  const routes = { '/dashboard': <p>Dashboard</p>, '/books': <p>Inventario</p> };
+describe('login destination', () => {
+  const lands = (state: object | null) =>
+    render(
+      <QueryClientProvider client={new QueryClient()}>
+        <AuthContext.Provider value={fakeAuth()}>
+          <MemoryRouter initialEntries={[{ pathname: '/login', state }]}>
+            <Routes>
+              <Route path="/login" element={<LoginPage />} />
+              <Route path="/dashboard" element={<p>Dashboard</p>} />
+              <Route path="/sales/new" element={<p>Nueva venta</p>} />
+            </Routes>
+          </MemoryRouter>
+        </AuthContext.Provider>
+      </QueryClientProvider>,
+    );
 
-  it('sends an administrator to the dashboard', () => {
-    renderWithProviders(<HomeRedirect />, { route: '/', path: '/', extraRoutes: routes });
+  it('goes to the dashboard for any profile when no page was requested', () => {
+    lands(null);
 
     expect(screen.getByText('Dashboard')).toBeInTheDocument();
   });
 
-  it('sends a regular user to the inventory', () => {
-    renderWithProviders(<HomeRedirect />, {
-      route: '/',
-      path: '/',
-      auth: { user: { id: 'u2', email: 'u@cmpc.cl', name: 'U', role: 'USER' } },
-      extraRoutes: routes,
-    });
+  it('returns to the requested page when a protected route sent the user to the login', () => {
+    lands({ from: '/sales/new' });
 
-    expect(screen.getByText('Inventario')).toBeInTheDocument();
+    expect(screen.getByText('Nueva venta')).toBeInTheDocument();
   });
 });
 
