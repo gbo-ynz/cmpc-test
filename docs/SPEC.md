@@ -277,29 +277,31 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 ## Ampliación: administración y perfiles
 
-Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) exportación de catálogos ✅ (RF-21) administración de usuarios ✅ (RF-10) y ventas ✅ (RF-16 y RF-17); dashboard 🛠 (fases 4 y 5).
+Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) exportación de catálogos ✅ (RF-21) administración de usuarios ✅ (RF-10) ventas ✅ (RF-16 y RF-17) y dashboard por perfil ✅ (RF-09).
 
 ### Perfiles y permisos
 
 | Capacidad                                          | Administrador (`ADMIN`) | Usuario (`USER`) |
 | -------------------------------------------------- | :---------------------: | :--------------: |
-| Dashboard                                          |           ✅            |        —         |
+| Dashboard (cifras de operación)                    |           ✅            |        ✅        |
+| Dashboard (valor, administración y auditoría)      |           ✅            |        —         |
 | Libros: listar, ver detalle, exportar CSV          |           ✅            |        ✅        |
 | Libros: crear, editar, eliminar, subir portada     |           ✅            |        ✅        |
 | Ventas: crear, listar, ver, completar y cancelar   |           ✅            |        ✅        |
 | Autores, editoriales y géneros: administrar (CRUD) |           ✅            |        —         |
 | Usuarios: administrar (CRUD)                       |           ✅            |        —         |
 
-### RF-09 · Dashboard del administrador 🛠
+### RF-09 · Dashboard por perfil ✅
 
-| CA  | Criterio de aceptación                                                                                                                       |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Al iniciar sesión, un administrador llega al dashboard; un usuario llega al inventario                                                       |
-| 2   | Muestra: libros activos, disponibles y no disponibles, valor del inventario disponible, cantidad de autores, editoriales, géneros y usuarios |
-| 3   | Muestra la cantidad de libros activos por género                                                                                             |
-| 6   | Muestra las ventas: cantidad de pendientes, y cantidad y monto total de las completadas                                                      |
-| 4   | Muestra las últimas 10 operaciones de auditoría (acción, entidad, usuario y fecha)                                                           |
-| 5   | Un usuario que intenta abrirlo ve "No tiene permisos para ver esta página"; la API responde 403                                              |
+Verificado por: API `get-dashboard.use-case.spec.ts` (un usuario no consulta los datos de administración), `dashboard.http.spec.ts` (401, y la respuesta de un usuario no contiene `administration`); INT `prisma-dashboard.repository.int-spec.ts` (libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` con decimales; orden de la auditoría); WEB `dashboard.test.tsx`, `dashboard.api.test.ts`, `auth.test.tsx` (inicio por perfil y menú); E2E `dashboard.spec.ts`, `admin.spec.ts`.
+
+| CA  | Criterio de aceptación                                                                                                                                                                                                                                              |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Al iniciar sesión, un administrador llega al dashboard y un usuario al inventario; ambos tienen "Dashboard" en el menú                                                                                                                                              |
+| 2   | **Todos los perfiles** ven: libros activos, disponibles y no disponibles; libros activos por género (solo los géneros con libros); ventas pendientes, ventas completadas y monto vendido                                                                            |
+| 3   | **Solo el administrador** ve además: valor del inventario disponible (suma de precio × stock de los libros activos con stock), cantidad de autores, editoriales, géneros y usuarios activos, y las últimas 10 operaciones de auditoría (operación, usuario y fecha) |
+| 4   | El recorte lo hace la **API**: la respuesta a un usuario no contiene la sección `administration` y su petición ni siquiera consulta esos datos; no depende de que la pantalla los oculte                                                                            |
+| 5   | Las cifras se recalculan cada vez que se abre la pantalla (no se guardan en caché), así reflejan las ventas y los libros recién cambiados                                                                                                                           |
 
 ### RF-10 · Administración de usuarios ✅
 

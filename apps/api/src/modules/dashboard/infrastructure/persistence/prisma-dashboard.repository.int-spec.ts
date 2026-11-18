@@ -25,11 +25,10 @@ it('counts active books and how many have stock, ignoring deleted ones', async (
   expect(await repository.bookStats()).toEqual({ active: 3, available: 2, unavailable: 1 });
 });
 
-it('counts active books per genre, most first, with empty genres at the end', async () => {
+it('counts active books per genre, most first, leaving out genres without books', async () => {
   expect(await repository.booksByGenre()).toEqual([
     { genre: 'Novela', books: 2 },
     { genre: 'Ensayo', books: 1 },
-    { genre: 'Vacío', books: 0 },
   ]);
 });
 

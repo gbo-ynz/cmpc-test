@@ -18,7 +18,7 @@ export function AppLayout({ userEmail, links, onLogout }: AppLayoutProps) {
   return (
     <div className="layout">
       <header className="topbar">
-        <Link to="/books" className="topbar__brand">
+        <Link to="/" className="topbar__brand">
           <img src={cmpcLogo} alt="" className="topbar__logo" width={28} height={26} />
           CMPC Libros
         </Link>

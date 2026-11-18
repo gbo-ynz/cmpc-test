@@ -12,6 +12,7 @@ import { AuthProvider } from './application/AuthProvider';
 import { useAuth } from './application/useAuth';
 import { credentialsSchema } from './domain/auth.types';
 import { authApi } from './infrastructure/auth.api';
+import { HomeRedirect } from './ui/HomeRedirect';
 import { LoginPage } from './ui/LoginPage';
 import { RequireAuth } from './ui/RequireAuth';
 
@@ -85,20 +86,20 @@ describe('LoginPage', () => {
     expect(await screen.findByText('Ingrese su correo electrónico')).toBeInTheDocument();
   });
 
-  it('signs in and redirects to the inventory', async () => {
+  it('signs in and goes to the home route (each profile lands on its own screen)', async () => {
     const login = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(<LoginPage />, {
       route: '/login',
       path: '/login',
       auth: { user: null, login },
-      extraRoutes: { '/books': <p>Inventario</p> },
+      extraRoutes: { '/': <p>Pantalla de inicio</p> },
     });
 
     await userEvent.type(screen.getByLabelText('Correo electrónico'), USER.email);
     await userEvent.type(screen.getByLabelText('Contraseña'), 'Admin123!');
     await userEvent.click(screen.getByRole('button', { name: 'Iniciar sesión' }));
 
-    expect(await screen.findByText('Inventario')).toBeInTheDocument();
+    expect(await screen.findByText('Pantalla de inicio')).toBeInTheDocument();
     expect(login).toHaveBeenCalledWith({ email: USER.email, password: 'Admin123!' });
   });
 
@@ -123,7 +124,28 @@ describe('LoginPage', () => {
     renderWithProviders(<LoginPage />, {
       route: '/login',
       path: '/login',
-      extraRoutes: { '/books': <p>Inventario</p> },
+      extraRoutes: { '/': <p>Pantalla de inicio</p> },
+    });
+
+    expect(screen.getByText('Pantalla de inicio')).toBeInTheDocument();
+  });
+});
+
+describe('HomeRedirect', () => {
+  const routes = { '/dashboard': <p>Dashboard</p>, '/books': <p>Inventario</p> };
+
+  it('sends an administrator to the dashboard', () => {
+    renderWithProviders(<HomeRedirect />, { route: '/', path: '/', extraRoutes: routes });
+
+    expect(screen.getByText('Dashboard')).toBeInTheDocument();
+  });
+
+  it('sends a regular user to the inventory', () => {
+    renderWithProviders(<HomeRedirect />, {
+      route: '/',
+      path: '/',
+      auth: { user: { id: 'u2', email: 'u@cmpc.cl', name: 'U', role: 'USER' } },
+      extraRoutes: routes,
     });
 
     expect(screen.getByText('Inventario')).toBeInTheDocument();
@@ -171,7 +193,7 @@ describe('AuthenticatedLayout menu', () => {
     const labels = within(menu())
       .getAllByRole('link')
       .map((link) => link.textContent);
-    expect(labels).toEqual(['Inventario', 'Ventas']);
+    expect(labels).toEqual(['Dashboard', 'Inventario', 'Ventas']);
   });
 });
 

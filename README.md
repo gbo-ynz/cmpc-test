@@ -322,26 +322,27 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 Todas las respuestas usan el mismo formato: `{ success: true, data, meta? }` o
 `{ success: false, data: null, error: { code, message, details? } }`.
 
-| Método                | Endpoint                                                                                                    | Descripción                                                        |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------ |
-| POST                  | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)                          |
-| GET                   | `/api/auth/me`                                                                                              | Usuario actual                                                     |
-| GET                   | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                                   |
-| GET                   | `/api/books/:id`                                                                                            | Detalle                                                            |
-| POST                  | `/api/books`                                                                                                | Crear                                                              |
-| PATCH                 | `/api/books/:id`                                                                                            | Actualización parcial                                              |
-| DELETE                | `/api/books/:id`                                                                                            | Soft delete (204)                                                  |
-| POST                  | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`)                |
-| GET                   | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                                   |
-| GET                   | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos (filtros)        |
-| GET                   | `/api/authors` · `/api/publishers` · `/api/genres`                                                          | Todos los registros, con sus libros activos                        |
-| GET                   | `/api/authors/export` · `/api/publishers/export` · `/api/genres/export`                                     | CSV con todos los registros del catálogo (solo administrador)      |
-| GET                   | `/api/authors/:id`                                                                                          | Un autor con fecha de nacimiento y biografía                       |
-| POST · PATCH · DELETE | `/api/authors[/:id]` (ídem `publishers`, `genres`)                                                          | Crear, editar, eliminar (solo administrador)                       |
-| GET · POST            | `/api/users` · `/api/users/:id` · PATCH · DELETE                                                            | Usuarios paginados, crear, editar, desactivar (solo administrador) |
-| GET · POST            | `/api/sales?status=&page=1&limit=10` · `/api/sales/:id`                                                     | Ventas paginadas con filtro por estado, crear una venta pendiente  |
-| POST                  | `/api/sales/:id/complete` · `/api/sales/:id/cancel`                                                         | Completar (descuenta stock, exige método de pago) o cancelar       |
-| GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)                      |
+| Método                | Endpoint                                                                                                    | Descripción                                                         |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------- |
+| POST                  | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)                           |
+| GET                   | `/api/auth/me`                                                                                              | Usuario actual                                                      |
+| GET                   | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                                    |
+| GET                   | `/api/books/:id`                                                                                            | Detalle                                                             |
+| POST                  | `/api/books`                                                                                                | Crear                                                               |
+| PATCH                 | `/api/books/:id`                                                                                            | Actualización parcial                                               |
+| DELETE                | `/api/books/:id`                                                                                            | Soft delete (204)                                                   |
+| POST                  | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`)                 |
+| GET                   | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                                    |
+| GET                   | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos (filtros)         |
+| GET                   | `/api/authors` · `/api/publishers` · `/api/genres`                                                          | Todos los registros, con sus libros activos                         |
+| GET                   | `/api/authors/export` · `/api/publishers/export` · `/api/genres/export`                                     | CSV con todos los registros del catálogo (solo administrador)       |
+| GET                   | `/api/authors/:id`                                                                                          | Un autor con fecha de nacimiento y biografía                        |
+| POST · PATCH · DELETE | `/api/authors[/:id]` (ídem `publishers`, `genres`)                                                          | Crear, editar, eliminar (solo administrador)                        |
+| GET · POST            | `/api/users` · `/api/users/:id` · PATCH · DELETE                                                            | Usuarios paginados, crear, editar, desactivar (solo administrador)  |
+| GET · POST            | `/api/sales?status=&page=1&limit=10` · `/api/sales/:id`                                                     | Ventas paginadas con filtro por estado, crear una venta pendiente   |
+| POST                  | `/api/sales/:id/complete` · `/api/sales/:id/cancel`                                                         | Completar (descuenta stock, exige método de pago) o cancelar        |
+| GET                   | `/api/dashboard`                                                                                            | Cifras principales; el administrador recibe además `administration` |
+| GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)                       |
 
 Contrato completo con esquemas y ejemplos: Swagger en http://localhost:3000/api/docs.
 

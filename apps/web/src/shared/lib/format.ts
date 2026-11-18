@@ -10,3 +10,10 @@ const dateFormatter = new Intl.DateTimeFormat('es-CL', { dateStyle: 'medium' });
 export const formatPrice = (amount: number): string => priceFormatter.format(amount);
 
 export const formatDate = (iso: string): string => dateFormatter.format(new Date(iso));
+
+const dateTimeFormatter = new Intl.DateTimeFormat('es-CL', {
+  dateStyle: 'medium',
+  timeStyle: 'short',
+});
+
+export const formatDateTime = (iso: string): string => dateTimeFormatter.format(new Date(iso));

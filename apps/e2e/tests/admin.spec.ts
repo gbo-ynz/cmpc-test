@@ -43,18 +43,26 @@ test('a genre that still has books cannot be deleted', async ({ page }) => {
 test.describe('regular user', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('sees only the inventory and sales, and cannot open administration pages', async ({
+  test('sees the operation dashboard, inventory and sales, but no administration', async ({
     page,
   }) => {
     const login = new LoginPage(page);
     await login.goto();
     await login.login(REGULAR_USER.email, REGULAR_USER.password);
 
+    await expect(page).toHaveURL(/\/books$/); // a regular user lands on the inventory
     const menu = page.getByRole('navigation', { name: 'Principal' });
-    await expect(menu.getByRole('link')).toHaveText(['Inventario', 'Ventas']);
+    await expect(menu.getByRole('link')).toHaveText(['Dashboard', 'Inventario', 'Ventas']);
     await page.goto('/authors');
     await expect(
       page.getByRole('heading', { name: 'No tiene permisos para ver esta página' }),
     ).toBeVisible();
+
+    await page.goto('/dashboard');
+    await expect(page.getByText('Resumen de la operación')).toBeVisible();
+    await expect(page.getByText('Libros activos')).toBeVisible();
+    await expect(page.getByText('Administración', { exact: true })).toHaveCount(0);
+    await expect(page.getByText('Valor del inventario disponible')).toHaveCount(0);
+    await expect(page.getByText('Actividad reciente')).toHaveCount(0);
   });
 });

@@ -1,8 +1,10 @@
-import { Navigate, createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { createBrowserRouter, type RouteObject } from 'react-router-dom';
+import { HomeRedirect } from '../features/auth/ui/HomeRedirect';
 import { LoginPage } from '../features/auth/ui/LoginPage';
 import { RequireAuth } from '../features/auth/ui/RequireAuth';
 import { RequireRole } from '../features/auth/ui/RequireRole';
 import { BooksListPage } from '../features/books/ui/pages/BooksListPage';
+import { DashboardPage } from '../features/dashboard/ui/DashboardPage';
 import { SalesPage } from '../features/sales/ui/SalesPage';
 import { NotFoundPage } from '../shared/ui/NotFoundPage';
 import { RouteError } from '../shared/ui/RouteError';
@@ -19,7 +21,8 @@ export const routes: RouteObject[] = [
       {
         element: <AuthenticatedLayout />,
         children: [
-          { index: true, element: <Navigate to="/books" replace /> },
+          { index: true, element: <HomeRedirect /> },
+          { path: 'dashboard', element: <DashboardPage /> },
           { path: 'books', element: <BooksListPage /> },
           {
             path: 'books/new',

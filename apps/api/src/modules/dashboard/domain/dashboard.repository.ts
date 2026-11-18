@@ -10,7 +10,7 @@ import type {
 export abstract class DashboardRepository {
   /** Active books, and how many of them have stock. */
   abstract bookStats(): Promise<BookStats>;
-  /** Active books per genre, most books first. */
+  /** Active books per genre, most books first; genres without active books are left out. */
   abstract booksByGenre(): Promise<GenreBookCount[]>;
   abstract salesStats(): Promise<SalesStats>;
   /** Sum of price x stock over the available books. */

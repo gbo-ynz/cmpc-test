@@ -5,6 +5,7 @@ import { useAuth } from '../features/auth/application/useAuth';
 import { AppLayout, type NavItem } from '../shared/ui/AppLayout';
 
 const EVERYONE: readonly NavItem[] = [
+  { to: '/dashboard', label: 'Dashboard' },
   { to: '/books', label: 'Inventario' },
   { to: '/sales', label: 'Ventas' },
 ];

@@ -37,5 +37,8 @@ export const toActivity = (row: ActivityRow): ActivityEntry => ({
   createdAt: row.createdAt,
 });
 
+/** Most books first; a genre without active books says nothing about the distribution. */
 export const sortGenres = (rows: GenreBookCount[]): GenreBookCount[] =>
-  [...rows].sort((a, b) => b.books - a.books || a.genre.localeCompare(b.genre));
+  rows
+    .filter((row) => row.books > 0)
+    .sort((a, b) => b.books - a.books || a.genre.localeCompare(b.genre));

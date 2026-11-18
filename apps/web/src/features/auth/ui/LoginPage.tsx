@@ -3,7 +3,8 @@ import cmpcLogo from '../../../assets/cmpc-logo.png';
 import { useAuth } from '../application/useAuth';
 import { LoginForm } from './LoginForm';
 
-const DEFAULT_REDIRECT = '/books';
+// The index route sends each profile to its own home (dashboard or inventory).
+const DEFAULT_REDIRECT = '/';
 
 export function LoginPage() {
   const { user } = useAuth();
