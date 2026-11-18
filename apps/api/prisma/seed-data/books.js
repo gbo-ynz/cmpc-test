@@ -1,0 +1,27 @@
+// Demo catalog: [title, author, publisher, genre, price (CLP), isAvailable].
+// 23 books -> 3 pages at the default page size, so pagination, sorting and filters are visible.
+module.exports = [
+  ['Cien años de soledad', 'Gabriel García Márquez', 'Sudamericana', 'Novela', 18990, true],
+  ['La casa de los espíritus', 'Isabel Allende', 'Plaza & Janés', 'Novela', 15990, true],
+  ['Rayuela', 'Julio Cortázar', 'Sudamericana', 'Novela', 16990, true],
+  ['El túnel', 'Ernesto Sabato', 'Sur', 'Novela', 11990, false],
+  ['Pedro Páramo', 'Juan Rulfo', 'Fondo de Cultura Económica', 'Novela', 12990, true],
+  ['Los detectives salvajes', 'Roberto Bolaño', 'Anagrama', 'Novela', 22990, true],
+  ['2666', 'Roberto Bolaño', 'Anagrama', 'Novela', 29990, false],
+  ['Veinte poemas de amor', 'Pablo Neruda', 'Nascimento', 'Poesía', 9990, true],
+  ['Desolación', 'Gabriela Mistral', 'Editorial Universitaria', 'Poesía', 10990, false],
+  ['Altazor', 'Vicente Huidobro', 'Editorial Universitaria', 'Poesía', 11990, true],
+  ['Ficciones', 'Jorge Luis Borges', 'Sur', 'Cuento', 12990, false],
+  ['El Aleph', 'Jorge Luis Borges', 'Losada', 'Cuento', 13990, true],
+  ['Bestiario', 'Julio Cortázar', 'Sudamericana', 'Cuento', 12990, true],
+  ['El lápiz de Rosalía', 'Antón Cortizas', 'Ediciones SM', 'Literatura infantil', 8990, true],
+  ['Papelucho', 'Marcela Paz', 'Editorial Universitaria', 'Literatura infantil', 9990, true],
+  ['El principito', 'Antoine de Saint-Exupéry', 'Salamandra', 'Literatura infantil', 10990, true],
+  ['Fahrenheit 451', 'Ray Bradbury', 'Minotauro', 'Ciencia ficción', 14990, true],
+  ['Fundación', 'Isaac Asimov', 'Debolsillo', 'Ciencia ficción', 13990, true],
+  ['Las venas abiertas de América Latina', 'Eduardo Galeano', 'Siglo XXI', 'Ensayo', 17990, true],
+  ['Sapiens: De animales a dioses', 'Yuval Noah Harari', 'Debate', 'Historia', 24990, true],
+  ['Clean Architecture', 'Robert C. Martin', 'Prentice Hall', 'Tecnología', 34990, true],
+  ['Domain-Driven Design', 'Eric Evans', 'Addison-Wesley', 'Tecnología', 42990, true],
+  ['Refactoring', 'Martin Fowler', 'Addison-Wesley', 'Tecnología', 39990, false],
+];

@@ -1,0 +1,33 @@
+{
+  "name": "cmpc-libros",
+  "version": "1.0.0",
+  "private": true,
+  "description": "CMPC-libros inventory platform (NestJS + React + PostgreSQL)",
+  "workspaces": [
+    "apps/api",
+    "apps/web",
+    "apps/e2e"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "prepare": "husky",
+    "lint": "npm run lint --workspaces",
+    "typecheck": "npm run typecheck --workspaces",
+    "test": "npm run test --workspaces --if-present",
+    "test:cov": "npm run test:cov --workspaces --if-present",
+    "test:int": "npm run test:int -w apps/api",
+    "test:e2e": "npm run e2e -w apps/e2e",
+    "format": "prettier --write \"**/*.{ts,tsx,json,md,yml,css}\"",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^19.8.1",
+    "@commitlint/config-conventional": "^19.8.1",
+    "husky": "^9.1.7",
+    "lint-staged": "^15.5.2",
+    "prettier": "^3.6.2"
+  }
+}

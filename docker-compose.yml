@@ -1,0 +1,56 @@
+name: cmpc-libros
+
+# Local stack: `docker compose up --build` → http://localhost:8080
+# Defaults below are for LOCAL DEVELOPMENT ONLY. Override them with a .env file
+# (POSTGRES_PASSWORD, JWT_SECRET) for any shared or production environment.
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: cmpc
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-cmpc_local_password}
+      POSTGRES_DB: cmpc_libros
+    ports:
+      - '${DB_HOST_PORT:-5433}:5432'
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U cmpc -d cmpc_libros']
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    environment:
+      NODE_ENV: production
+      PORT: 3000
+      DATABASE_URL: postgresql://cmpc:${POSTGRES_PASSWORD:-cmpc_local_password}@db:5432/cmpc_libros?schema=public
+      JWT_SECRET: ${JWT_SECRET:-local-only-secret-change-me-0123456789abcdef}
+      JWT_EXPIRES_IN_SECONDS: 3600
+      CORS_ORIGIN: http://localhost:8080,http://localhost:5173
+      UPLOADS_DIR: /app/apps/api/uploads
+    depends_on:
+      db:
+        condition: service_healthy
+    ports:
+      - '3000:3000'
+    volumes:
+      - uploads:/app/apps/api/uploads
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+    depends_on:
+      api:
+        condition: service_healthy
+    ports:
+      - '8080:80'
+
+volumes:
+  db-data:
+  uploads:

@@ -1,0 +1,38 @@
+import { Injectable } from '@nestjs/common';
+import { AuditLogger } from '../../../shared/application/audit-logger.port';
+import { TransactionManager } from '../../../shared/application/transaction-manager.port';
+import { BOOK_ENTITY_TYPE } from '../domain/book';
+import type { BookData } from '../domain/book-data';
+import { BookRepository } from '../domain/book.repository';
+import { BookView, toBookView } from './book-view';
+import { requireBook } from './require-book';
+
+export interface UpdateBookCommand {
+  readonly id: string;
+  readonly changes: Partial<BookData>;
+  readonly actorId: string;
+}
+
+@Injectable()
+export class UpdateBookUseCase {
+  constructor(
+    private readonly books: BookRepository,
+    private readonly transactions: TransactionManager,
+    private readonly audit: AuditLogger,
+  ) {}
+
+  execute({ id, changes, actorId }: UpdateBookCommand): Promise<BookView> {
+    return this.transactions.run(async () => {
+      const current = await requireBook(this.books, id);
+      const saved = await this.books.save(current.update(changes));
+      await this.audit.record({
+        action: 'UPDATE',
+        entityType: BOOK_ENTITY_TYPE,
+        entityId: id,
+        actorId,
+        metadata: { changes },
+      });
+      return toBookView(saved);
+    });
+  }
+}
