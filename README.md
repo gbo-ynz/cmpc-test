@@ -584,4 +584,5 @@ La guía para extender la aplicación respetando estas reglas está en [docs/BUI
 - Reactivación de libros eliminados (el soft delete ya conserva los datos necesarios).
 - Adaptador `ImageStorage` compatible con S3 + redimensionamiento de imágenes.
 - Paginación por keyset para exportaciones de catálogos muy grandes; particionado de la tabla de auditoría.
+- Actualizar `prisma` a 7.x y `zod` a 4.x: `npm audit --omit=dev` reporta 4 avisos de severidad alta (agotamiento de memoria al validar colecciones enormes con `zod`, que aquí solo valida campos de formulario; y agotamiento de pila en `deepmerge-ts`, usado por la configuración del CLI de Prisma). El riesgo en este uso es bajo, pero ambas correcciones son saltos de versión mayor y conviene hacerlas con su propia verificación.
 - Pipeline de CI (GitHub Actions): lint → typecheck → test → E2E → build de imágenes.
