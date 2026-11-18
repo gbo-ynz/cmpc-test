@@ -165,6 +165,21 @@ describe('SalesPage', () => {
     );
   });
 
+  it('colors each status: pending in amber, completed in green and cancelled in red', async () => {
+    const sale = (id: string, status: SaleSummary['status']) => ({ ...SUMMARY, id, status });
+    sales.listPage.mockResolvedValue(
+      pageOf([sale('s1', 'PENDING'), sale('s2', 'COMPLETED'), sale('s3', 'CANCELLED')]),
+    );
+    renderWithProviders(<SalesPage />);
+
+    const badge = (label: string) => screen.getByText(label, { selector: '.badge' });
+    await screen.findByRole('table');
+
+    expect(badge('Pendiente')).toHaveClass('badge--warning');
+    expect(badge('Completada')).toHaveClass('badge--success');
+    expect(badge('Cancelada')).toHaveClass('badge--danger');
+  });
+
   it('shows an empty state when there are no sales', async () => {
     sales.listPage.mockResolvedValue(pageOf([]));
     renderWithProviders(<SalesPage />);

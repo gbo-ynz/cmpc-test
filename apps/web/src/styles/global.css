@@ -717,6 +717,10 @@ a.icon-button {
   background: #fdf3d8;
   color: #7a5a00;
 }
+.badge--danger {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
 .sales-filter {
   max-width: 320px;
   padding: var(--space);

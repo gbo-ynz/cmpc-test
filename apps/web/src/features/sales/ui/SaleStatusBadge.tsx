@@ -3,7 +3,7 @@ import { SALE_STATUS_LABELS, type SaleStatus } from '../domain/sale.types';
 const TONE: Record<SaleStatus, string> = {
   PENDING: 'warning',
   COMPLETED: 'success',
-  CANCELLED: 'muted',
+  CANCELLED: 'danger',
 };
 
 export function SaleStatusBadge({ status }: { status: SaleStatus }) {
