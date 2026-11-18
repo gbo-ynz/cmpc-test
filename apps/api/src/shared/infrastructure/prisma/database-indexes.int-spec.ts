@@ -1,5 +1,6 @@
 import type { PrismaClient } from '@prisma/client';
 import { startTestDatabase, type TestDatabase } from '../../../test-utils/postgres-container';
+import { planOf } from '../../../test-utils/query-plan';
 
 // The indexes that back the frequent queries (see docs/DATABASE.md). If a migration drops or
 // renames one, these tests fail before the slowdown reaches production.
@@ -30,14 +31,6 @@ const REPRESENTATIVE_DATA = [
 async function seedRepresentativeData(prisma: PrismaClient): Promise<void> {
   for (const statement of REPRESENTATIVE_DATA) await prisma.$executeRawUnsafe(statement);
 }
-
-/** EXPLAIN output for a query, with sequential scans discouraged so index choice is visible. */
-const planOf = (prisma: PrismaClient, sql: string): Promise<string> =>
-  prisma.$transaction(async (tx) => {
-    await tx.$executeRawUnsafe('SET LOCAL enable_seqscan = off');
-    const rows = await tx.$queryRawUnsafe<Array<{ 'QUERY PLAN': string }>>(`EXPLAIN ${sql}`);
-    return rows.map((row) => row['QUERY PLAN']).join('\n');
-  });
 
 describe('database indexes (PostgreSQL)', () => {
   let db: TestDatabase;
