@@ -26,8 +26,10 @@ test('creating a sale lands on the list; completing it discounts the stock and m
 
   await page.goto('/sales');
   await row.getByRole('button', { name: /^Completar venta/ }).click();
-  await row.getByLabel('Método de pago').selectOption('Efectivo');
-  await row.getByRole('button', { name: 'Completar', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Completar venta' });
+  await dialog.getByLabel('Método de pago').selectOption('Efectivo');
+  await dialog.getByRole('button', { name: 'Aceptar' }).click();
+  await expect(dialog).toHaveCount(0);
 
   await expect(row).toContainText('Completada');
   await expect(row.getByRole('button')).toHaveCount(0);
@@ -59,9 +61,11 @@ test('completing fails and discounts nothing when the book was deleted meanwhile
   const row = latestSaleRow(page);
 
   await row.getByRole('button', { name: /^Completar venta/ }).click();
-  await row.getByLabel('Método de pago').selectOption('Transferencia');
-  await row.getByRole('button', { name: 'Completar', exact: true }).click();
+  const dialog = page.getByRole('dialog', { name: 'Completar venta' });
+  await dialog.getByLabel('Método de pago').selectOption('Transferencia');
+  await dialog.getByRole('button', { name: 'Aceptar' }).click();
 
-  await expect(row.getByRole('alert')).toContainText('No se descontó nada');
+  await expect(dialog.getByRole('alert')).toContainText('No se descontó nada');
+  await dialog.getByRole('button', { name: 'Volver' }).click();
   await expect(row).toContainText('Pendiente');
 });

@@ -727,3 +727,29 @@ a.icon-button {
 .confirm .field__control {
   width: auto;
 }
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: grid;
+  place-items: center;
+  padding: var(--space);
+  background: rgb(20 30 25 / 45%);
+}
+.modal {
+  display: grid;
+  gap: var(--space);
+  width: min(440px, 100%);
+  padding: calc(var(--space) * 1.5);
+}
+.modal:focus {
+  outline: none;
+}
+.modal__title {
+  margin: 0;
+}
+.modal__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}

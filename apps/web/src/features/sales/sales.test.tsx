@@ -102,16 +102,40 @@ describe('SalesPage', () => {
     expect(within(done).queryByRole('button')).not.toBeInTheDocument();
   });
 
-  it('completes from the list: the ticket asks for the payment method first', async () => {
+  it('completes from the list: the check opens a popup to choose the payment method', async () => {
     sales.complete.mockResolvedValue({ ...SALE, status: 'COMPLETED', paymentMethod: 'CASH' });
     renderWithProviders(<SalesPage />);
     await userEvent.click(await screen.findByRole('button', { name: /^Completar venta/ }));
 
-    expect(screen.getByRole('button', { name: 'Completar' })).toBeDisabled();
-    await userEvent.selectOptions(screen.getByLabelText('Método de pago'), 'CASH');
-    await userEvent.click(screen.getByRole('button', { name: 'Completar' }));
+    const dialog = screen.getByRole('dialog', { name: 'Completar venta' });
+    expect(within(dialog).getByRole('button', { name: 'Aceptar' })).toBeDisabled();
+    await userEvent.selectOptions(within(dialog).getByLabelText('Método de pago'), 'CASH');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aceptar' }));
 
     await waitFor(() => expect(sales.complete).toHaveBeenCalledWith('s1', 'CASH'));
+    await waitFor(() => expect(screen.queryByRole('dialog')).not.toBeInTheDocument());
+  });
+
+  it('keeps the popup open and explains the error when the sale cannot be completed', async () => {
+    sales.complete.mockRejectedValue(new ApiError('x', 409, 'CONFLICT'));
+    renderWithProviders(<SalesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Completar venta/ }));
+    const dialog = screen.getByRole('dialog');
+
+    await userEvent.selectOptions(within(dialog).getByLabelText('Método de pago'), 'CASH');
+    await userEvent.click(within(dialog).getByRole('button', { name: 'Aceptar' }));
+
+    expect(await within(dialog).findByRole('alert')).toHaveTextContent('No se descontó nada');
+  });
+
+  it('closes the popup without completing when the user goes back', async () => {
+    renderWithProviders(<SalesPage />);
+    await userEvent.click(await screen.findByRole('button', { name: /^Completar venta/ }));
+
+    await userEvent.click(screen.getByRole('button', { name: 'Volver' }));
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument();
+    expect(sales.complete).not.toHaveBeenCalled();
   });
 
   it('cancels from the list only after confirming', async () => {
