@@ -6,7 +6,7 @@ export const BOOK_SORT_FIELDS = [
   'publisher',
   'genre',
   'price',
-  'isAvailable',
+  'stock',
   'createdAt',
 ] as const;
 
@@ -23,6 +23,7 @@ export interface BookFilters {
   readonly genreId?: string;
   readonly publisherId?: string;
   readonly authorId?: string;
+  /** true: stock > 0; false: stock = 0. */
   readonly isAvailable?: boolean;
 }
 

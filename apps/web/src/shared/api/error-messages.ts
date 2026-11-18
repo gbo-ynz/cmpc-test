@@ -9,7 +9,7 @@ const MESSAGES: Record<string, string> = {
   UNAUTHORIZED: 'Correo electrónico o contraseña incorrectos.',
   FORBIDDEN: 'No tiene permisos para realizar esta acción.',
   NOT_FOUND: 'El recurso solicitado no existe o fue eliminado.',
-  CONFLICT: 'El recurso fue modificado por otra persona. Recargue e intente nuevamente.',
+  CONFLICT: 'La operación entra en conflicto con datos existentes.',
   PAYLOAD_TOO_LARGE: 'El archivo supera el tamaño máximo permitido (2 MB).',
   UNSUPPORTED_MEDIA_TYPE: 'Formato de archivo no permitido. Use JPEG, PNG o WEBP.',
   TOO_MANY_REQUESTS: 'Demasiados intentos. Espere un minuto e intente nuevamente.',

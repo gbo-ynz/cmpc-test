@@ -29,7 +29,7 @@ describe('authorization by role (real guards over HTTP)', () => {
       findByEmail: jest.fn(),
       findById: jest.fn((id: string) => Promise.resolve(stored[id] ?? null)),
     };
-    app = await createHttpApp(users, [ProbeController]);
+    app = await createHttpApp(users, { controllers: [ProbeController] });
   });
 
   afterEach(() => app.close());

@@ -7,6 +7,12 @@ export const DEMO_USER = {
   password: process.env.E2E_USER_PASSWORD ?? 'Admin123!',
 };
 
+/** Demo account with the regular "usuario" role (also created by the seed). */
+export const REGULAR_USER = {
+  email: process.env.E2E_REGULAR_EMAIL ?? 'usuario@cmpc.cl',
+  password: process.env.E2E_REGULAR_PASSWORD ?? 'Usuario123!',
+};
+
 export const SESSION_FILE = fileURLToPath(new URL('../.auth/session.json', import.meta.url));
 
 const SESSION_KEY = 'cmpc.session'; // apps/web/src/shared/auth/session-storage.ts

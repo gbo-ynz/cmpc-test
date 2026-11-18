@@ -1,6 +1,7 @@
 import { unwrap, unwrapPage, type Envelope } from '../../../shared/api/envelope';
 import { httpClient } from '../../../shared/api/http-client';
-import type { Book, BooksGateway, Catalog } from '../domain/book.types';
+import type { Book, Catalog } from '../domain/book.types';
+import type { BooksGateway } from '../domain/books.gateway';
 import { toFilterParams, toListParams } from './query-params';
 
 /** HTTP adapter implementing the BooksGateway port. */

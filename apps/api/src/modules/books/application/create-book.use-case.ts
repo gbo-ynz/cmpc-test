@@ -1,13 +1,15 @@
 import { Injectable } from '@nestjs/common';
 import { AuditLogger } from '../../../shared/application/audit-logger.port';
 import { TransactionManager } from '../../../shared/application/transaction-manager.port';
+import { ReferenceRepository } from '../../references/domain/reference.repository';
 import { BOOK_ENTITY_TYPE, Book } from '../domain/book';
 import type { BookData } from '../domain/book-data';
 import { BookRepository } from '../domain/book.repository';
+import { type BookInput, resolveBookInput } from './book-input';
 import { BookView, toBookView } from './book-view';
 
 export interface CreateBookCommand {
-  readonly data: BookData;
+  readonly data: BookInput;
   readonly actorId: string;
 }
 
@@ -15,14 +17,16 @@ export interface CreateBookCommand {
 export class CreateBookUseCase {
   constructor(
     private readonly books: BookRepository,
+    private readonly references: ReferenceRepository,
     private readonly transactions: TransactionManager,
     private readonly audit: AuditLogger,
   ) {}
 
-  /** Book + author/publisher/genre upserts + audit entry commit atomically. */
-  execute({ data, actorId }: CreateBookCommand): Promise<BookView> {
+  /** Book + audit entry commit atomically; author, publisher and genre must already exist. */
+  async execute({ data, actorId }: CreateBookCommand): Promise<BookView> {
+    const book = Book.create((await resolveBookInput(this.references, data)) as BookData);
     return this.transactions.run(async () => {
-      const saved = await this.books.save(Book.create(data));
+      const saved = await this.books.save(book);
       await this.audit.record({
         action: 'CREATE',
         entityType: BOOK_ENTITY_TYPE,

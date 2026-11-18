@@ -24,7 +24,7 @@ export default function BookEditPage() {
     }
   };
 
-  const { title, author, publisher, genre, price, isAvailable } = book;
+  const { title, authorId, publisherId, genreId, price, stock } = book;
 
   return (
     <section className="page page--narrow">
@@ -41,7 +41,7 @@ export default function BookEditPage() {
       {/* A new updatedAt remounts the form with the saved values: clean state, current cover. */}
       <BookForm
         key={book.updatedAt}
-        defaultValues={{ title, author, publisher, genre, price, isAvailable }}
+        defaultValues={{ title, authorId, publisherId, genreId, price, stock }}
         currentImageUrl={book.imageUrl}
         submitLabel="Guardar cambios"
         onSubmit={handleSubmit}

@@ -2,9 +2,16 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/application/useAuth';
-import { AppLayout } from '../shared/ui/AppLayout';
+import { AppLayout, type NavItem } from '../shared/ui/AppLayout';
 
-/** Container: wires the auth feature into the presentational layout. */
+const EVERYONE: readonly NavItem[] = [{ to: '/books', label: 'Inventario' }];
+const ADMIN_ONLY: readonly NavItem[] = [
+  { to: '/authors', label: 'Autores' },
+  { to: '/publishers', label: 'Editoriales' },
+  { to: '/genres', label: 'Géneros' },
+];
+
+/** Container: wires the auth feature into the presentational layout (menu depends on the role). */
 export function AuthenticatedLayout() {
   const { user, logout } = useAuth();
   const queryClient = useQueryClient();
@@ -16,5 +23,6 @@ export function AuthenticatedLayout() {
     navigate('/login', { replace: true });
   }, [logout, queryClient, navigate]);
 
-  return <AppLayout userEmail={user?.email ?? ''} onLogout={handleLogout} />;
+  const links = user?.role === 'ADMIN' ? [...EVERYONE, ...ADMIN_ONLY] : EVERYONE;
+  return <AppLayout userEmail={user?.email ?? ''} links={links} onLogout={handleLogout} />;
 }

@@ -89,6 +89,9 @@ img {
 }
 .topbar__nav {
   flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
 }
 .topbar__nav a {
   text-decoration: none;
@@ -299,6 +302,105 @@ img {
 }
 .table__actions {
   text-align: right;
+}
+.table__center {
+  text-align: center;
+}
+/* Same specificity as `.table th, .table td` (text-align: left), so alignment classes win. */
+.table .table__center {
+  text-align: center;
+}
+.table .table__actions {
+  text-align: right;
+}
+
+/* Catalog screens (authors, publishers, genres) */
+.reference-form {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 16px 20px;
+}
+.reference-form .field {
+  flex: 1;
+  min-width: 220px;
+}
+.reference-form > [role='alert'] {
+  flex-basis: 100%;
+}
+.reference-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+  font-weight: 500;
+}
+.reference-avatar {
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--color-success-soft);
+  color: var(--color-primary-strong);
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+.count-pill {
+  display: inline-block;
+  min-width: 2.25rem;
+  padding: 2px 10px;
+  border-radius: 999px;
+  background: var(--color-success-soft);
+  color: var(--color-primary-strong);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+.count-pill--empty {
+  background: #eef1ef;
+  color: var(--color-muted);
+}
+
+/* Icon-only actions: always paired with an aria-label and a tooltip (IconButton). */
+.icon-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.icon-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--color-muted);
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    color 120ms ease;
+}
+.icon-button:hover:not(:disabled) {
+  background: rgb(47 125 58 / 10%);
+  color: var(--color-primary-strong);
+}
+.icon-button--danger:hover:not(:disabled) {
+  background: var(--color-danger-soft);
+  color: var(--color-danger);
+}
+.icon-button--primary {
+  color: var(--color-primary);
+}
+.icon-button:focus-visible {
+  outline: 3px solid rgb(47 125 58 / 35%);
+  outline-offset: 2px;
+}
+.icon-button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
 }
 .table-placeholder {
   display: grid;

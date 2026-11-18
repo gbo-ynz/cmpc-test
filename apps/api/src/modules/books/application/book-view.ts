@@ -4,10 +4,15 @@ import type { Book } from '../domain/book';
 export interface BookView {
   readonly id: string;
   readonly title: string;
+  readonly authorId: string;
   readonly author: string;
+  readonly publisherId: string;
   readonly publisher: string;
+  readonly genreId: string;
   readonly genre: string;
   readonly price: number;
+  readonly stock: number;
+  /** Derived: stock > 0. */
   readonly isAvailable: boolean;
   readonly imageUrl: string | null;
   readonly createdAt: string;
@@ -15,16 +20,20 @@ export interface BookView {
 }
 
 export function toBookView(book: Book): BookView {
-  const { id, title, author, publisher, genre, price, isAvailable, imageUrl } = book.snapshot();
+  const { id, title, author, publisher, genre, price, stock, imageUrl } = book.snapshot();
   const { createdAt, updatedAt } = book.snapshot();
   return {
     id,
     title,
-    author,
-    publisher,
-    genre,
+    authorId: author.id,
+    author: author.name,
+    publisherId: publisher.id,
+    publisher: publisher.name,
+    genreId: genre.id,
+    genre: genre.name,
     price: price.amount,
-    isAvailable,
+    stock,
+    isAvailable: book.isAvailable,
     imageUrl,
     createdAt: createdAt.toISOString(),
     updatedAt: updatedAt.toISOString(),

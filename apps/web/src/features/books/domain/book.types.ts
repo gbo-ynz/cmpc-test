@@ -1,12 +1,15 @@
-import type { Page } from '../../../shared/api/envelope';
-
 export interface Book {
   readonly id: string;
   readonly title: string;
+  readonly authorId: string;
   readonly author: string;
+  readonly publisherId: string;
   readonly publisher: string;
+  readonly genreId: string;
   readonly genre: string;
   readonly price: number;
+  readonly stock: number;
+  /** Derived by the API: stock > 0. */
   readonly isAvailable: boolean;
   readonly imageUrl: string | null;
   readonly createdAt: string;
@@ -15,7 +18,7 @@ export interface Book {
 
 export type BookInput = Pick<
   Book,
-  'title' | 'author' | 'publisher' | 'genre' | 'price' | 'isAvailable'
+  'title' | 'authorId' | 'publisherId' | 'genreId' | 'price' | 'stock'
 >;
 
 export interface CatalogItem {
@@ -30,7 +33,7 @@ export interface Catalog {
 }
 
 export type SortField =
-  'title' | 'author' | 'publisher' | 'genre' | 'price' | 'isAvailable' | 'createdAt';
+  'title' | 'author' | 'publisher' | 'genre' | 'price' | 'stock' | 'createdAt';
 export type SortDirection = 'asc' | 'desc';
 
 export interface SortRule {
@@ -53,16 +56,4 @@ export interface BookListParams {
   readonly sort: readonly SortRule[];
   readonly page: number;
   readonly limit: number;
-}
-
-/** Port: the UI depends on this contract, not on axios. */
-export interface BooksGateway {
-  list(params: BookListParams): Promise<Page<Book>>;
-  get(id: string): Promise<Book>;
-  create(input: BookInput): Promise<Book>;
-  update(id: string, input: Partial<BookInput>): Promise<Book>;
-  remove(id: string): Promise<void>;
-  uploadImage(id: string, file: File): Promise<Book>;
-  exportCsv(filters: BookFilters, sort: readonly SortRule[]): Promise<Blob>;
-  catalog(): Promise<Catalog>;
 }

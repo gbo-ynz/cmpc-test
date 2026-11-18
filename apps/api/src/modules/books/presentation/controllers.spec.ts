@@ -58,7 +58,7 @@ describe('BooksCommandController', () => {
   const update = useCase<UpdateBookUseCase>({ id: ID });
   const remove = useCase<DeleteBookUseCase>();
   const controller = new BooksCommandController(create, update, remove);
-  const dto = { title: 'T', author: 'A', publisher: 'P', genre: 'G', price: 1, isAvailable: true };
+  const dto = { title: 'T', authorId: 'a', publisherId: 'p', genreId: 'g', price: 1, stock: 2 };
 
   it('creates, updates and deletes on behalf of the current user', async () => {
     await controller.create(dto, USER);

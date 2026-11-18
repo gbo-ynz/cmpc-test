@@ -43,7 +43,6 @@ async function seedBooks() {
         title,
         price,
         stock,
-        isAvailable: stock > 0, // expand phase: kept in sync until is_available is dropped
         author: connect(author),
         publisher: connect(publisher),
         genre: connect(genre),

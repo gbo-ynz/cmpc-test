@@ -1,4 +1,4 @@
-import { Prisma } from '@prisma/client';
+import type { Prisma } from '@prisma/client';
 import { Book } from '../../domain/book';
 import { Price } from '../../domain/price';
 
@@ -10,20 +10,17 @@ export const BOOK_INCLUDE = {
 
 export type BookRecord = Prisma.BookGetPayload<{ include: typeof BOOK_INCLUDE }>;
 
-// Reference entities are normalized tables; the aggregate addresses them by name.
-const connectByName = (name: string) => ({
-  connectOrCreate: { where: { name }, create: { name } },
-});
+const reference = ({ id, name }: { id: string; name: string }) => ({ id, name });
 
 export function toDomain(record: BookRecord): Book {
   return Book.restore({
     id: record.id,
     title: record.title,
-    author: record.author.name,
-    publisher: record.publisher.name,
-    genre: record.genre.name,
+    author: reference(record.author),
+    publisher: reference(record.publisher),
+    genre: reference(record.genre),
     price: Price.of(record.price.toNumber()),
-    isAvailable: record.isAvailable,
+    stock: record.stock,
     imageUrl: record.imageUrl,
     createdAt: record.createdAt,
     updatedAt: record.updatedAt,
@@ -31,17 +28,18 @@ export function toDomain(record: BookRecord): Book {
   });
 }
 
+// Catalog records are managed on their own screens: a book only connects to existing ones.
 export function toPersistence(book: Book): Prisma.BookCreateInput {
   const snapshot = book.snapshot();
   return {
     id: snapshot.id,
     title: snapshot.title,
     price: snapshot.price.toDecimalString(),
-    isAvailable: snapshot.isAvailable,
+    stock: snapshot.stock,
     imageUrl: snapshot.imageUrl,
     deletedAt: snapshot.deletedAt,
-    author: connectByName(snapshot.author),
-    publisher: connectByName(snapshot.publisher),
-    genre: connectByName(snapshot.genre),
+    author: { connect: { id: snapshot.author.id } },
+    publisher: { connect: { id: snapshot.publisher.id } },
+    genre: { connect: { id: snapshot.genre.id } },
   };
 }

@@ -145,7 +145,7 @@ de PostgreSQL. Datos de conexión para DBeaver, TablePlus o DataGrip:
 
 ```sql
 -- Libros, incluidos los eliminados (soft delete)
-select title, is_available, deleted_at from books order by created_at;
+select title, stock, deleted_at from books order by created_at;
 
 -- Últimas operaciones auditadas
 select action, entity_type, entity_id, user_id, created_at from audit_logs order by created_at desc limit 20;
@@ -220,7 +220,8 @@ cuando expira, cualquier operación lo redirige al login.
 
 - Los campos se validan mientras se escribe y el botón de guardar se habilita solo cuando el formulario es
   válido y tiene cambios.
-- Autor, editorial y género sugieren los nombres existentes; si escribe uno nuevo, se crea automáticamente.
+- Autor, editorial y género se **eligen de listas** con los registros existentes. Si falta uno, el administrador lo crea en su pantalla (Autores, Editoriales o Géneros).
+- **Stock (unidades)**: un libro está disponible mientras tenga stock mayor que 0; no hay un "disponible" manual.
 - **Imagen de portada** (opcional): JPEG, PNG o WEBP de hasta 2 MB, con vista previa. Al editar, subir una
   imagen nueva reemplaza la anterior.
 - **Al crear**, la aplicación abre el detalle del libro nuevo.
@@ -228,7 +229,17 @@ cuando expira, cualquier operación lo redirige al login.
   "Editar libro"**: aparece "Los cambios se guardaron correctamente." y el formulario queda con los valores
   guardados, listo para seguir editando. El enlace superior, **← Volver al inventario**, regresa al listado.
 
-### 4. Ver el detalle y eliminar
+### 4. Administrar autores, editoriales y géneros (solo administrador)
+
+El menú de un administrador incluye **Autores**, **Editoriales** y **Géneros**. Cada pantalla lista los
+registros con su cantidad de libros activos y permite agregar, renombrar (en la misma fila) y eliminar.
+
+- Los nombres no se repiten, sin distinguir mayúsculas ("Novela" y "novela" son el mismo).
+- Un registro con libros asociados (incluso eliminados) no se puede eliminar.
+- Un usuario con perfil "usuario" no ve estas secciones; si abre la URL, ve "No tiene permisos para ver
+  esta página" (y la API responde 403).
+
+### 5. Ver el detalle y eliminar
 
 ![Detalle del libro](docs/screenshots/05-detalle.png)
 
@@ -301,19 +312,21 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 Todas las respuestas usan el mismo formato: `{ success: true, data, meta? }` o
 `{ success: false, data: null, error: { code, message, details? } }`.
 
-| Método | Endpoint                                                                                                    | Descripción                                         |
-| ------ | ----------------------------------------------------------------------------------------------------------- | --------------------------------------------------- |
-| POST   | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)           |
-| GET    | `/api/auth/me`                                                                                              | Usuario actual                                      |
-| GET    | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                    |
-| GET    | `/api/books/:id`                                                                                            | Detalle                                             |
-| POST   | `/api/books`                                                                                                | Crear                                               |
-| PATCH  | `/api/books/:id`                                                                                            | Actualización parcial                               |
-| DELETE | `/api/books/:id`                                                                                            | Soft delete (204)                                   |
-| POST   | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`) |
-| GET    | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                    |
-| GET    | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos   |
-| GET    | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)       |
+| Método                | Endpoint                                                                                                    | Descripción                                                 |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
+| POST                  | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)                   |
+| GET                   | `/api/auth/me`                                                                                              | Usuario actual                                              |
+| GET                   | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                            |
+| GET                   | `/api/books/:id`                                                                                            | Detalle                                                     |
+| POST                  | `/api/books`                                                                                                | Crear                                                       |
+| PATCH                 | `/api/books/:id`                                                                                            | Actualización parcial                                       |
+| DELETE                | `/api/books/:id`                                                                                            | Soft delete (204)                                           |
+| POST                  | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`)         |
+| GET                   | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                            |
+| GET                   | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos (filtros) |
+| GET                   | `/api/authors` · `/api/publishers` · `/api/genres`                                                          | Todos los registros, con sus libros activos                 |
+| POST · PATCH · DELETE | `/api/authors[/:id]` (ídem `publishers`, `genres`)                                                          | Crear, renombrar, eliminar (solo administrador)             |
+| GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)               |
 
 Contrato completo con esquemas y ejemplos: Swagger en http://localhost:3000/api/docs.
 
@@ -366,21 +379,21 @@ docs/
 
 ## Decisiones de diseño
 
-| Decisión                                                                                                     | Fundamento                                                                                                                                                            |
-| ------------------------------------------------------------------------------------------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Puertos como `abstract class`                                                                                | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                              |
-| Agregado `Book` inmutable + value object `Price` (en centavos)                                               | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                           |
-| Transacciones con `AsyncLocalStorage`                                                                        | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + upserts de referencias + auditoría se confirman de forma atómica. |
-| Autores/editoriales/géneros normalizados con `connectOrCreate` por nombre                                    | El usuario escribe nombres (con sugerencias); los filtros usan IDs estables.                                                                                          |
-| El catálogo de filtros solo incluye valores con libros activos                                               | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                                    |
-| Soft delete (`deleted_at`)                                                                                   | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                                |
-| Tabla de auditoría escrita dentro de la transacción de negocio                                               | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                                |
-| El JWT se valida contra la base de datos en cada petición                                                    | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria).      |
-| Controladores CQS (consulta / comando / imagen)                                                              | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                                 |
-| Exportación CSV en streaming con protección contra inyección de fórmulas                                     | Memoria constante; seguro de abrir en Excel.                                                                                                                          |
-| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal | El MIME type lo controla el cliente.                                                                                                                                  |
-| Despliegue en el mismo origen (nginx redirige `/api`)                                                        | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                                   |
-| JWT en `localStorage`                                                                                        | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                             |
+| Decisión                                                                                                     | Fundamento                                                                                                                                                       |
+| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Puertos como `abstract class`                                                                                | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                         |
+| Agregado `Book` inmutable + value object `Price` (en centavos)                                               | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                      |
+| Transacciones con `AsyncLocalStorage`                                                                        | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                     |
+| Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id        | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                            |
+| El catálogo de filtros solo incluye valores con libros activos                                               | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                               |
+| Soft delete (`deleted_at`)                                                                                   | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                           |
+| Tabla de auditoría escrita dentro de la transacción de negocio                                               | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                           |
+| El JWT se valida contra la base de datos en cada petición                                                    | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria). |
+| Controladores CQS (consulta / comando / imagen)                                                              | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                            |
+| Exportación CSV en streaming con protección contra inyección de fórmulas                                     | Memoria constante; seguro de abrir en Excel.                                                                                                                     |
+| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal | El MIME type lo controla el cliente.                                                                                                                             |
+| Despliegue en el mismo origen (nginx redirige `/api`)                                                        | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                              |
+| JWT en `localStorage`                                                                                        | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                        |
 
 ## Logging y auditoría
 
@@ -397,7 +410,7 @@ devuelve un mensaje genérico.
 
 ## Supuestos
 
-- La "disponibilidad" se modela como booleano (`isAvailable`); la cantidad en stock es una evolución documentada.
+- La disponibilidad se deriva del stock (`stock > 0`); no es un dato que se edite a mano.
 - Un libro tiene exactamente un autor, una editorial y un género (el enunciado los menciona en singular).
 - Los precios están en CLP con hasta 2 decimales.
 - Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
@@ -408,10 +421,10 @@ devuelve un mensaje genérico.
 
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
-| API (Jest)                     | 128   | 100% (ramas 97,8%)                                            |
-| Web (Vitest + Testing Library) | 94    | 94,9% (ramas 96,3%)                                           |
-| Integración (Testcontainers)   | 15    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
-| E2E (Playwright, Chromium)     | 12    | Flujos críticos                                               |
+| API (Jest)                     | 146   | 100% (ramas 96,3%)                                            |
+| Web (Vitest + Testing Library) | 106   | 93,8% (ramas 94,9%)                                           |
+| Integración (Testcontainers)   | 20    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
+| E2E (Playwright, Chromium)     | 15    | Flujos críticos                                               |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).
 

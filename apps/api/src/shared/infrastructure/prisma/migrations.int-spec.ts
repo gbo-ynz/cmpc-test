@@ -32,6 +32,13 @@ it('backfills the stock from the old availability flag', async () => {
   ]);
 });
 
+it('drops is_available once stock replaces it (contract phase)', async () => {
+  const columns = await db.prisma.$queryRaw<Array<{ column_name: string }>>`
+    SELECT column_name FROM information_schema.columns WHERE table_name = 'books'`;
+
+  expect(columns.map((row) => row.column_name)).not.toContain('is_available');
+});
+
 it('rejects a negative stock at the database level', async () => {
   await expect(db.prisma.$executeRawUnsafe('UPDATE books SET stock = -1')).rejects.toThrow(
     /books_stock_non_negative/,

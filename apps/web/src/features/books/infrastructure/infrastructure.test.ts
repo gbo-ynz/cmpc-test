@@ -53,11 +53,11 @@ describe('booksApi', () => {
     const remove = vi.spyOn(httpClient, 'delete').mockResolvedValue({ data: null });
     const input = {
       title: 'T',
-      author: 'A',
-      publisher: 'P',
-      genre: 'G',
+      authorId: 'a1',
+      publisherId: 'p1',
+      genreId: 'g1',
       price: 1,
-      isAvailable: true,
+      stock: 3,
     };
 
     await expect(booksApi.get('b1')).resolves.toEqual(BOOK);

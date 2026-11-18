@@ -7,7 +7,7 @@ const EXPECTED_BOOK_INDEXES = [
   'books_deleted_at_genre_id_idx',
   'books_deleted_at_publisher_id_idx',
   'books_deleted_at_author_id_idx',
-  'books_deleted_at_is_available_idx',
+  'books_deleted_at_stock_idx',
   'books_deleted_at_created_at_idx',
   'books_price_idx',
   'books_title_trgm_idx',

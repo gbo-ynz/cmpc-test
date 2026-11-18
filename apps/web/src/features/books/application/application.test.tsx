@@ -29,11 +29,11 @@ const api = vi.mocked(booksApi);
 const BOOK = { id: 'b1', title: 'Rayuela' } as Book;
 const INPUT = {
   title: 'Rayuela',
-  author: 'A',
-  publisher: 'P',
-  genre: 'G',
+  authorId: 'a1',
+  publisherId: 'p1',
+  genreId: 'g1',
   price: 1,
-  isAvailable: true,
+  stock: 3,
 };
 
 function createWrapper() {

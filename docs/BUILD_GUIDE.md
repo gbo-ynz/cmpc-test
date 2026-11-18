@@ -52,7 +52,7 @@ modules/<contexto>/
    ```ts
    markUnavailable(now = new Date()): Book {
      this.assertActive();
-     return new Book({ ...this.props, isAvailable: false, updatedAt: now });
+     return new Book({ ...this.props, stock: 0, updatedAt: now });
    }
    ```
    Testearlo en `book.spec.ts` (puro, sin mocks).

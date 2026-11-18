@@ -2,7 +2,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { FormActions } from '../../../../shared/ui/FormActions';
-import { useCatalog } from '../../application/book-queries';
+import { useBookFormOptions } from '../../application/book-form-options';
 import {
   EMPTY_BOOK_FORM,
   bookFormSchema,
@@ -26,7 +26,7 @@ export function BookForm({
   onSubmit,
 }: BookFormProps) {
   const [image, setImage] = useState<File | null>(null);
-  const { data: catalog } = useCatalog();
+  const options = useBookFormOptions();
   const {
     register,
     handleSubmit,
@@ -45,7 +45,7 @@ export function BookForm({
       noValidate
       onSubmit={handleSubmit((values) => onSubmit(values, image))}
     >
-      <BookFormFields register={register} errors={errors} catalog={catalog} />
+      <BookFormFields register={register} errors={errors} options={options} />
       <ImagePicker currentUrl={currentImageUrl} onChange={setImage} />
       <FormActions
         cancelTo="/books"

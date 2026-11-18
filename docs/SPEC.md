@@ -106,7 +106,7 @@ portada opcional y fechas de alta, actualización y eliminación lógica.
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | Los errores aparecen mientras se escribe, según las reglas del [modelo](#modelo-del-dominio)                                                                                                                                | WEB `BookForm.test.tsx` › "validates reactively while the user types"; E2E `book-lifecycle.spec.ts` › paso "reactive validation…"                                                                                                                                       |
 | 2   | El botón de guardar se habilita solo si el formulario es válido y, al editar, si hay cambios                                                                                                                                | WEB `BookForm.test.tsx` › "keeps the edit form disabled until something changes"                                                                                                                                                                                        |
-| 3   | Autor, editorial y género sugieren los nombres existentes; un nombre nuevo se crea al guardar                                                                                                                               | WEB `BookForm.test.tsx` › "suggests existing authors"; API `persistence.spec.ts` › "maps the aggregate to a normalized write model"                                                                                                                                     |
+| 3   | Autor, editorial y género sugieren los nombres existentes; un nombre nuevo se crea al guardar                                                                                                                               | WEB `BookForm.test.tsx` › "offers every existing record of each catalog"; API `persistence.spec.ts` › "maps the aggregate to a write model that only connects existing catalog records"                                                                                 |
 | 4   | Al crear se navega al detalle; si falla el guardado, el usuario permanece en el formulario con el error                                                                                                                     | WEB `pages.test.tsx` › "creates the book and opens its detail", "keeps the user on the form when saving fails"                                                                                                                                                          |
 | 5   | La edición precarga los datos actuales; al guardar, el usuario **permanece en "Editar libro"**, ve "Los cambios se guardaron correctamente." (desplazado a la vista) y el formulario queda limpio con los valores guardados | WEB `pages.test.tsx` › "pre-fills the form, saves and stays on the edit page with a confirmation"; `ui.test.tsx` › "SuccessBanner announces itself and scrolls into view…"; E2E `book-edit.spec.ts` › "from the list, \"Editar\" opens the form and saving stays on it" |
 | 6   | Desde la edición, el enlace superior siempre es "← Volver al inventario", se llegue desde el listado o desde el detalle                                                                                                     | WEB `pages.test.tsx` › "always offers a way back to the inventory"; E2E `book-edit.spec.ts` › "from the detail, saving stays on the form and the top link goes back to the inventory"                                                                                   |
@@ -157,7 +157,7 @@ portada opcional y fechas de alta, actualización y eliminación lógica.
 | CA  | Criterio de aceptación                                                                                   | Verificado por                                                                                                                                                            |
 | --- | -------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | 1   | `POST /books` 201, `GET /books`, `GET /books/:id`, `PATCH /books/:id` (parcial), `DELETE /books/:id` 204 | API `controllers.spec.ts` (3 tests); `book-commands.spec.ts`; `book-queries.spec.ts`                                                                                      |
-| 2   | `PATCH` aplica solo los campos enviados                                                                  | API `book-commands.spec.ts` › "applies partial changes and audits them"; `book.spec.ts` › "updates immutably, ignoring undefined fields"                                  |
+| 2   | `PATCH` aplica solo los campos enviados                                                                  | API `book-commands.spec.ts` › "applies partial changes: with no stock the book is no longer available"; `book.spec.ts` › "updates immutably, ignoring undefined fields"   |
 | 3   | Operar sobre un libro inexistente responde 404                                                           | API `book-commands.spec.ts` › "fails for unknown books"                                                                                                                   |
 | 4   | Los cuerpos con campos no declarados o inválidos se rechazan con 400                                     | `ValidationPipe` global con `whitelist` y `forbidNonWhitelisted` (`bootstrap/app.setup.ts`); API `error-resolver.spec.ts` › "exposes class-validator messages as details" |
 
@@ -201,10 +201,10 @@ portada opcional y fechas de alta, actualización y eliminación lógica.
 
 ### BD-02 · Modelo normalizado con relaciones ✅
 
-| CA  | Criterio de aceptación                                                                                 | Verificado por                                                                                           |
-| --- | ------------------------------------------------------------------------------------------------------ | -------------------------------------------------------------------------------------------------------- |
-| 1   | Autores, editoriales y géneros viven en tablas propias con nombre único; `books` los referencia por FK | API `persistence.spec.ts` › "maps the aggregate to a normalized write model"; [DATABASE.md](DATABASE.md) |
-| 2   | `audit_logs` referencia al usuario que ejecutó la operación                                            | `schema.prisma`; RB-02 CA-4 impide escribir auditoría con un usuario inexistente                         |
+| CA  | Criterio de aceptación                                                                                 | Verificado por                                                                                                                            |
+| --- | ------------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Autores, editoriales y géneros viven en tablas propias con nombre único; `books` los referencia por FK | API `persistence.spec.ts` › "maps the aggregate to a write model that only connects existing catalog records"; [DATABASE.md](DATABASE.md) |
+| 2   | `audit_logs` referencia al usuario que ejecutó la operación                                            | `schema.prisma`; RB-02 CA-4 impide escribir auditoría con un usuario inexistente                                                          |
 
 ### BD-03 · Índices para consultas frecuentes ✅
 
@@ -229,7 +229,7 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 | CA  | Criterio de aceptación                                                          | Verificado por                                                                                     |
 | --- | ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------- |
-| 1   | Con la base vacía, el seed crea el usuario administrador, 23 libros y 8 géneros | INT `seed.int-spec.ts` › "loads the admin user and the demo catalog into an empty database"        |
+| 1   | Con la base vacía, el seed crea el usuario administrador, 23 libros y 8 géneros | INT `seed.int-spec.ts` › "loads one user per role and the demo catalog into an empty database"     |
 | 2   | El seed es idempotente: ejecutarlo de nuevo no duplica ni modifica datos        | INT `seed.int-spec.ts` › "is idempotent: running it again changes nothing"                         |
 | 3   | Si la base ya tiene libros, el seed no los toca                                 | INT `seed.int-spec.ts` › "never overwrites existing data: a database with books is left untouched" |
 
@@ -277,8 +277,7 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 ## Ampliación: administración y perfiles
 
-Requisitos agregados después del enunciado (no forman parte de la prueba original). Estado: 🛠 planificado
-(criterio aprobado, implementación en curso).
+Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock); ventas, usuarios y dashboard 🛠 (fases 3 a 5).
 
 ### Perfiles y permisos
 
@@ -314,7 +313,9 @@ Requisitos agregados después del enunciado (no forman parte de la prueba origin
 | 6   | Un administrador no puede eliminarse ni quitarse el perfil de administrador a sí mismo, y siempre debe quedar al menos un administrador activo (409)                  |
 | 7   | Crear, editar y eliminar quedan en `audit_logs`                                                                                                                       |
 
-### RF-11 a RF-13 · Administración de autores, editoriales y géneros 🛠
+### RF-11 a RF-13 · Administración de autores, editoriales y géneros ✅
+
+Verificado por: API `references.spec.ts` (8 casos de uso) y `references.http.spec.ts` (permisos, 201/400/404/409 por HTTP real); INT `prisma-reference.repository.int-spec.ts` (orden, conteo, mayúsculas, libros eliminados); WEB `references.test.tsx`; E2E `admin.spec.ts` › "an administrator creates, renames and deletes a genre", "a genre that still has books cannot be deleted".
 
 Las tres pantallas comparten las mismas reglas:
 
@@ -325,7 +326,9 @@ Las tres pantallas comparten las mismas reglas:
 | 3   | Solo se puede eliminar un registro sin libros asociados (ni activos ni eliminados, para no romper el historial); si no, responde 409 indicando cuántos tiene |
 | 4   | Crear, renombrar y eliminar quedan en `audit_logs`                                                                                                           |
 
-### RF-14 · Libros con catálogo administrado 🛠
+### RF-14 · Libros con catálogo administrado ✅
+
+Verificado por: API `book-commands.spec.ts` › "resolves the catalog ids…", "rejects an unknown author, publisher or genre without persisting anything"; `persistence.spec.ts` › "maps the aggregate to a write model that only connects existing catalog records"; WEB `BookForm.test.tsx` › "offers every existing record of each catalog", "submits the selected catalog ids together with the image"; E2E `book-lifecycle.spec.ts`.
 
 | CA  | Criterio de aceptación                                                                                                                                  |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -333,7 +336,9 @@ Las tres pantallas comparten las mismas reglas:
 | 2   | La API recibe identificadores (`authorId`, `publisherId`, `genreId`) y rechaza con 400 uno inexistente; ya no crea registros nuevos al guardar un libro |
 | 3   | Los filtros del inventario siguen mostrando solo valores con libros activos (RF-02 CA-2)                                                                |
 
-### RF-15 · Stock de libros 🛠
+### RF-15 · Stock de libros ✅
+
+Verificado por: API `book.spec.ts` (stock entero ≥ 0), `book-commands.spec.ts` › "applies partial changes: with no stock the book is no longer available", `persistence.spec.ts` (filtro `stock > 0`), `book-csv.serializer.spec.ts` (columna Stock); WEB `BookForm.test.tsx` › "rejects a negative or fractional stock"; E2E `book-list.spec.ts` › "filters combine: genre + availability".
 
 | CA  | Criterio de aceptación                                                                                                                   |
 | --- | ---------------------------------------------------------------------------------------------------------------------------------------- |
@@ -362,13 +367,13 @@ Las tres pantallas comparten las mismas reglas:
 | 5   | Cancelar pide confirmación, registra la fecha y no modifica el stock                                                                                              |
 | 6   | Crear, completar y cancelar quedan en `audit_logs` (acciones `CREATE`, `COMPLETE`, `CANCEL`)                                                                      |
 
-### RB-07 · Autorización por perfil (API ✅, front 🛠)
+### RB-07 · Autorización por perfil ✅
 
-| CA  | Criterio de aceptación                                                                                                           | Estado y verificación                                                                                                                                                                          |
-| --- | -------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Las rutas de administración responden 403 `FORBIDDEN` a un usuario sin perfil de administrador                                   | ✅ API `authorization.http.spec.ts` › "answers 403 FORBIDDEN to a regular user on admin routes", "authenticates before authorizing: no token is 401, not 403"; `roles.guard.spec.ts` (4 tests) |
-| 2   | El perfil se lee de la base en cada petición (RB-02 CA-4): un cambio de perfil aplica de inmediato                               | ✅ API `authorization.http.spec.ts` › "reads the role from the database, not from the token"                                                                                                   |
-| 3   | El menú solo muestra las secciones permitidas y las rutas protegidas del front muestran "No tiene permisos para ver esta página" | 🛠 Fase 2 (llega con la primera pantalla de administración)                                                                                                                                     |
+| CA  | Criterio de aceptación                                                                                                           | Estado y verificación                                                                                                                                                                                                                                        |
+| --- | -------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Las rutas de administración responden 403 `FORBIDDEN` a un usuario sin perfil de administrador                                   | ✅ API `authorization.http.spec.ts` › "answers 403 FORBIDDEN to a regular user on admin routes", "authenticates before authorizing: no token is 401, not 403"; `roles.guard.spec.ts` (4 tests)                                                               |
+| 2   | El perfil se lee de la base en cada petición (RB-02 CA-4): un cambio de perfil aplica de inmediato                               | ✅ API `authorization.http.spec.ts` › "reads the role from the database, not from the token"                                                                                                                                                                 |
+| 3   | El menú solo muestra las secciones permitidas y las rutas protegidas del front muestran "No tiene permisos para ver esta página" | ✅ WEB `references.test.tsx` › "shows the page to an administrator and a clear message to anyone else"; `auth.test.tsx` › "shows only the inventory to a regular user"; E2E `admin.spec.ts` › "sees only the inventory and cannot open administration pages" |
 
 ### BD-06 · Migración de perfiles y usuarios ✅
 
@@ -377,14 +382,14 @@ Las tres pantallas comparten las mismas reglas:
 | 1   | El perfil `EDITOR` pasa a llamarse `USER` sin perder datos (`ALTER TYPE … RENAME VALUE`)                          | ✅ INT `migrations.int-spec.ts` › "renames the EDITOR role to USER without losing users"                                |
 | 2   | `users` incorpora `deleted_at`; las búsquedas de usuarios (login y validación del token) ignoran a los eliminados | ✅ INT `prisma-user.repository.int-spec.ts` › "ignores deleted users: they cannot log in and their tokens stop working" |
 
-### BD-07 · Migración de stock y ventas (expandir ✅, contraer 🛠)
+### BD-07 · Migración de stock y ventas ✅
 
-| CA  | Criterio de aceptación                                                                                                                                         | Estado y verificación                                                                                                                                    |
-| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | `books` incorpora `stock` (entero, `CHECK (stock >= 0)`); los libros existentes quedan con stock 1 si estaban disponibles y 0 si no; `is_available` se elimina | ✅ INT `migrations.int-spec.ts` › "backfills the stock…", "rejects a negative stock at the database level". 🛠 Eliminar `is_available`: fase 2 (contraer) |
-| 2   | Nuevas tablas `sales` y `sale_items` con estado, método de pago, total, fechas y usuario creador; `sale_items` referencia `books` y `sales`                    | ✅ INT `migrations.int-spec.ts` › "creates the sales tables and the new audit actions"                                                                   |
-| 3   | Índices para el listado de ventas (`status`, `created_at`) y para filtrar libros disponibles (`deleted_at`, `stock`)                                           | ✅ Creados en la migración; `prisma migrate diff` sin diferencias. 🛠 El plan de ejecución se verificará cuando existan las consultas (fases 2 y 3)       |
-| 4   | El seed carga stock para los 23 libros de ejemplo                                                                                                              | ✅ INT `seed.int-spec.ts` › "loads stock, keeping availability consistent with it (stock > 0)"                                                           |
+| CA  | Criterio de aceptación                                                                                                                                         | Estado y verificación                                                                                                                                                                               |
+| --- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | `books` incorpora `stock` (entero, `CHECK (stock >= 0)`); los libros existentes quedan con stock 1 si estaban disponibles y 0 si no; `is_available` se elimina | ✅ INT `migrations.int-spec.ts` › "backfills the stock…", "rejects a negative stock at the database level". Contracción: INT `migrations.int-spec.ts` › "drops is_available once stock replaces it" |
+| 2   | Nuevas tablas `sales` y `sale_items` con estado, método de pago, total, fechas y usuario creador; `sale_items` referencia `books` y `sales`                    | ✅ INT `migrations.int-spec.ts` › "creates the sales tables and the new audit actions"                                                                                                              |
+| 3   | Índices para el listado de ventas (`status`, `created_at`) y para filtrar libros disponibles (`deleted_at`, `stock`)                                           | ✅ Creados en la migración; `prisma migrate diff` sin diferencias. 🛠 El plan de ejecución se verificará cuando existan las consultas (fases 2 y 3)                                                  |
+| 4   | El seed carga stock para los 23 libros de ejemplo                                                                                                              | ✅ INT `seed.int-spec.ts` › "loads stock for every book, some of them out of stock"                                                                                                                 |
 
 ## Supuestos
 

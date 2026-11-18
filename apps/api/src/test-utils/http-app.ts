@@ -1,4 +1,4 @@
-import type { Type } from '@nestjs/common';
+import type { Abstract, Type } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import { Test } from '@nestjs/testing';
@@ -23,13 +23,20 @@ export const REGULAR_USER: User = {
   role: 'USER',
 };
 
+export interface HttpAppOptions {
+  /** Extra controllers mounted on top of AppModule (e.g. a probe route). */
+  readonly controllers?: Type[];
+  /** Providers replaced by in-memory fakes. */
+  readonly overrides?: ReadonlyArray<{ provide: Type | Abstract<unknown>; useValue: unknown }>;
+}
+
 /**
  * The real AppModule with the real HTTP setup (global guards, helmet, pipes, filters).
  * Only persistence is replaced: no database is needed.
  */
 export async function createHttpApp(
   users: UserRepository,
-  controllers: Type[] = [],
+  { controllers = [], overrides = [] }: HttpAppOptions = {},
 ): Promise<NestExpressApplication> {
   process.env.DATABASE_URL = 'postgresql://unused:unused@localhost:5432/unused';
   process.env.JWT_SECRET = 'x'.repeat(32);
@@ -37,13 +44,17 @@ export async function createHttpApp(
     client: { $queryRaw: jest.fn().mockResolvedValue([1]) },
     onModuleInit: jest.fn(),
   };
-  const moduleRef = await Test.createTestingModule({ imports: [AppModule], controllers })
+  let builder = Test.createTestingModule({ imports: [AppModule], controllers })
     .overrideProvider(PrismaService)
     .useValue(prisma)
     .overrideProvider(UserRepositoryToken)
-    .useValue(users)
-    .compile();
-  const app = moduleRef.createNestApplication<NestExpressApplication>({ logger: false });
+    .useValue(users);
+  for (const { provide, useValue } of overrides) {
+    builder = builder.overrideProvider(provide).useValue(useValue);
+  }
+  const app = (await builder.compile()).createNestApplication<NestExpressApplication>({
+    logger: false,
+  });
   configureApp(app);
   await app.init();
   return app;
@@ -52,4 +63,13 @@ export async function createHttpApp(
 /** A valid access token for the given user, signed with the app's own key. */
 export function tokenFor(app: NestExpressApplication, user: User): Promise<string> {
   return app.get(JwtService).signAsync({ sub: user.id, email: user.email, role: user.role });
+}
+
+/** Users repository fake that resolves the given users by id (for signed tokens). */
+export function usersById(...known: User[]): UserRepository {
+  const byId = new Map(known.map((user) => [user.id, user]));
+  return {
+    findByEmail: jest.fn().mockResolvedValue(null),
+    findById: jest.fn((id: string) => Promise.resolve(byId.get(id) ?? null)),
+  };
 }

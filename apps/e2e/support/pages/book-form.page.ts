@@ -1,32 +1,30 @@
 import type { Locator, Page } from '@playwright/test';
 import type { BookData } from '../test-data';
 
-type TextFieldName = 'Título' | 'Autor' | 'Editorial' | 'Género' | 'Precio (CLP)';
+type TextFieldName = 'Título' | 'Precio (CLP)' | 'Stock (unidades)';
+type SelectName = 'Autor' | 'Editorial' | 'Género';
 
-const FIELD_BY_KEY: Record<keyof BookData, TextFieldName> = {
-  title: 'Título',
-  author: 'Autor',
-  publisher: 'Editorial',
-  genre: 'Género',
-  price: 'Precio (CLP)',
-};
+const TEXT_FIELDS = { title: 'Título', price: 'Precio (CLP)', stock: 'Stock (unidades)' } as const;
+const SELECTS = { author: 'Autor', publisher: 'Editorial', genre: 'Género' } as const;
+
+const isSelect = (key: keyof BookData): key is keyof typeof SELECTS => key in SELECTS;
 
 export class BookFormPage {
-  readonly available: Locator;
   readonly cover: Locator;
 
   constructor(private readonly page: Page) {
-    this.available = page.getByLabel('Disponible para la venta');
     this.cover = page.getByLabel('Imagen de portada');
   }
 
-  field(name: TextFieldName): Locator {
+  field(name: TextFieldName | SelectName): Locator {
     return this.page.getByLabel(name, { exact: true });
   }
 
+  /** Types text fields and picks author, publisher and genre from their lists by name. */
   async fill(data: Partial<BookData>): Promise<void> {
     for (const [key, value] of Object.entries(data) as Array<[keyof BookData, string]>) {
-      await this.field(FIELD_BY_KEY[key]).fill(value);
+      if (isSelect(key)) await this.field(SELECTS[key]).selectOption({ label: value });
+      else await this.field(TEXT_FIELDS[key]).fill(value);
     }
   }
 

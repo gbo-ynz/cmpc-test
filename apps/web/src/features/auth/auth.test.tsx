@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { act, render, renderHook, screen } from '@testing-library/react';
+import { act, render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
 import { MemoryRouter, Route, Routes } from 'react-router-dom';
@@ -140,6 +140,31 @@ describe('RequireAuth', () => {
     });
 
     expect(screen.getByText('Login screen')).toBeInTheDocument();
+  });
+});
+
+describe('AuthenticatedLayout menu', () => {
+  const menu = () => screen.getByRole('navigation', { name: 'Principal' });
+
+  it('shows the administration sections to an administrator', () => {
+    renderWithProviders(<AuthenticatedLayout />, { route: '/books', path: '/books' });
+
+    for (const section of ['Inventario', 'Autores', 'Editoriales', 'Géneros']) {
+      expect(within(menu()).getByRole('link', { name: section })).toBeInTheDocument();
+    }
+  });
+
+  it('shows only the inventory to a regular user', () => {
+    renderWithProviders(<AuthenticatedLayout />, {
+      route: '/books',
+      path: '/books',
+      auth: { user: { id: 'u2', email: 'usuario@cmpc.cl', name: 'Usuario', role: 'USER' } },
+    });
+
+    const labels = within(menu())
+      .getAllByRole('link')
+      .map((link) => link.textContent);
+    expect(labels).toEqual(['Inventario']);
   });
 });
 

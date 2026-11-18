@@ -2,13 +2,19 @@ import { Link, NavLink, Outlet } from 'react-router-dom';
 import cmpcLogo from '../../assets/cmpc-logo.png';
 import { Button } from './Button';
 
+export interface NavItem {
+  readonly to: string;
+  readonly label: string;
+}
+
 interface AppLayoutProps {
   userEmail: string;
+  links: readonly NavItem[];
   onLogout: () => void;
 }
 
-/** Presentational shell: knows nothing about how auth works. */
-export function AppLayout({ userEmail, onLogout }: AppLayoutProps) {
+/** Presentational shell: knows nothing about how auth or roles work (it just renders links). */
+export function AppLayout({ userEmail, links, onLogout }: AppLayoutProps) {
   return (
     <div className="layout">
       <header className="topbar">
@@ -17,9 +23,11 @@ export function AppLayout({ userEmail, onLogout }: AppLayoutProps) {
           CMPC Libros
         </Link>
         <nav className="topbar__nav" aria-label="Principal">
-          <NavLink to="/books" end>
-            Inventario
-          </NavLink>
+          {links.map((link) => (
+            <NavLink key={link.to} to={link.to}>
+              {link.label}
+            </NavLink>
+          ))}
         </nav>
         <div className="topbar__user">
           <span className="muted">{userEmail}</span>

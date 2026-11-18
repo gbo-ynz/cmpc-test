@@ -10,6 +10,7 @@ const COLUMNS = [
   ['publisher', 'Editorial'],
   ['genre', 'Género'],
   ['price', 'Precio'],
+  ['stock', 'Stock'],
   ['isAvailable', 'Disponible'],
   ['createdAt', 'Fecha de alta'],
 ] as const satisfies readonly (readonly [keyof BookView, string])[];

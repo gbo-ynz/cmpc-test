@@ -33,6 +33,11 @@ export class Book {
     return this.props.deletedAt !== null;
   }
 
+  /** Availability is derived, never stored: a book is available while it has stock. */
+  get isAvailable(): boolean {
+    return this.props.stock > 0;
+  }
+
   update(changes: Partial<BookData>, now: Date = new Date()): Book {
     this.assertActive();
     const merged = normalizeBookData({ ...this.toData(), ...definedChanges(changes) });
@@ -54,8 +59,8 @@ export class Book {
   }
 
   private toData(): BookData {
-    const { title, author, publisher, genre, price, isAvailable } = this.props;
-    return { title, author, publisher, genre, price: price.amount, isAvailable };
+    const { title, author, publisher, genre, price, stock } = this.props;
+    return { title, author, publisher, genre, price: price.amount, stock };
   }
 
   private assertActive(): void {

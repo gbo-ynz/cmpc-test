@@ -1,36 +1,42 @@
-import { screen, waitFor } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { renderWithProviders } from '../../../../test/render';
-import { booksApi } from '../../infrastructure/books.api';
+import { referencesApi } from '../../../references/infrastructure/references.api';
 import { BookForm } from './BookForm';
 
-vi.mock('../../infrastructure/books.api', () => ({ booksApi: { catalog: vi.fn() } }));
+vi.mock('../../../references/infrastructure/references.api', () => ({
+  referencesApi: { list: vi.fn() },
+}));
+
+const CATALOG = {
+  authors: [{ id: 'a1', name: 'Julio Cortázar', activeBooks: 1 }],
+  publishers: [{ id: 'p1', name: 'Sudamericana', activeBooks: 1 }],
+  genres: [{ id: 'g1', name: 'Novela', activeBooks: 1 }],
+};
 
 const VALUES = {
   title: 'Rayuela',
-  author: 'Cortázar',
-  publisher: 'Sudamericana',
-  genre: 'Novela',
+  authorId: 'a1',
+  publisherId: 'p1',
+  genreId: 'g1',
   price: 16990,
-  isAvailable: true,
+  stock: 4,
 };
 
 async function fillForm() {
   await userEvent.type(screen.getByLabelText('Título'), VALUES.title);
-  await userEvent.type(screen.getByLabelText('Autor'), VALUES.author);
-  await userEvent.type(screen.getByLabelText('Editorial'), VALUES.publisher);
-  await userEvent.type(screen.getByLabelText('Género'), VALUES.genre);
+  await userEvent.selectOptions(await screen.findByLabelText('Autor'), 'Julio Cortázar');
+  await userEvent.selectOptions(screen.getByLabelText('Editorial'), 'Sudamericana');
+  await userEvent.selectOptions(screen.getByLabelText('Género'), 'Novela');
   await userEvent.clear(screen.getByLabelText('Precio (CLP)'));
   await userEvent.type(screen.getByLabelText('Precio (CLP)'), String(VALUES.price));
+  await userEvent.clear(screen.getByLabelText('Stock (unidades)'));
+  await userEvent.type(screen.getByLabelText('Stock (unidades)'), String(VALUES.stock));
 }
 
 describe('BookForm', () => {
   beforeEach(() => {
-    vi.mocked(booksApi.catalog).mockResolvedValue({
-      authors: [{ id: 'a1', name: 'Cortázar' }],
-      publishers: [],
-      genres: [],
-    });
+    vi.mocked(referencesApi.list).mockImplementation((kind) => Promise.resolve(CATALOG[kind]));
   });
 
   it('validates reactively while the user types', async () => {
@@ -45,7 +51,17 @@ describe('BookForm', () => {
     expect(screen.getByRole('button', { name: 'Crear libro' })).toBeDisabled();
   });
 
-  it('submits valid values together with the selected image', async () => {
+  it('rejects a negative or fractional stock', async () => {
+    renderWithProviders(<BookForm submitLabel="Crear libro" onSubmit={vi.fn()} />);
+    const stock = screen.getByLabelText('Stock (unidades)');
+
+    await userEvent.clear(stock);
+    await userEvent.type(stock, '1.5');
+
+    expect(await screen.findByText('El stock debe ser un número entero')).toBeInTheDocument();
+  });
+
+  it('submits the selected catalog ids together with the image', async () => {
     const onSubmit = vi.fn().mockResolvedValue(undefined);
     renderWithProviders(<BookForm submitLabel="Crear libro" onSubmit={onSubmit} />);
     const image = new File(['x'], 'cover.webp', { type: 'image/webp' });
@@ -65,16 +81,18 @@ describe('BookForm', () => {
     const submit = screen.getByRole('button', { name: 'Guardar cambios' });
 
     expect(submit).toBeDisabled();
-    await userEvent.click(screen.getByLabelText('Disponible para la venta'));
+    await userEvent.type(screen.getByLabelText('Stock (unidades)'), '0');
 
     await waitFor(() => expect(submit).toBeEnabled());
   });
 
-  it('suggests existing authors', async () => {
+  it('offers every existing record of each catalog', async () => {
     renderWithProviders(<BookForm submitLabel="Crear libro" onSubmit={vi.fn()} />);
 
+    const author = await screen.findByLabelText('Autor');
     await waitFor(() =>
-      expect(document.querySelector('#authors-list option[value="Cortázar"]')).not.toBeNull(),
+      expect(within(author).getByRole('option', { name: 'Julio Cortázar' })).toBeInTheDocument(),
     );
+    expect(referencesApi.list).toHaveBeenCalledWith('genres');
   });
 });

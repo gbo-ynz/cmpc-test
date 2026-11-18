@@ -1,16 +1,17 @@
+import type { Reference } from '../../references/domain/reference';
 import { InvalidBookError } from './book.errors';
 import { Price } from './price';
 
-export const BOOK_LIMITS = { title: 255, author: 160, publisher: 160, genre: 80 } as const;
+export const BOOK_LIMITS = { title: 255, stock: 1_000_000 } as const;
 
-/** Raw input coming from any driving adapter (HTTP, CLI, queue...). */
+/** Domain input: the author, publisher and genre are existing catalog records, never free text. */
 export interface BookData {
   readonly title: string;
-  readonly author: string;
-  readonly publisher: string;
-  readonly genre: string;
+  readonly author: Reference;
+  readonly publisher: Reference;
+  readonly genre: Reference;
   readonly price: number;
-  readonly isAvailable: boolean;
+  readonly stock: number;
 }
 
 export interface NormalizedBookData extends Omit<BookData, 'price'> {
@@ -26,21 +27,32 @@ export function requiredText(value: string | undefined, field: string, maxLength
   return text;
 }
 
+function requiredReference(reference: Reference | undefined, field: string): Reference {
+  if (!reference?.id) throw new InvalidBookError(`${field} is required`);
+  return reference;
+}
+
+function validStock(stock: number): number {
+  if (!Number.isInteger(stock) || stock < 0 || stock > BOOK_LIMITS.stock) {
+    throw new InvalidBookError(`stock must be a whole number between 0 and ${BOOK_LIMITS.stock}`);
+  }
+  return stock;
+}
+
 /** Enforces every Book invariant in one place. */
 export function normalizeBookData(data: BookData): NormalizedBookData {
-  if (typeof data.isAvailable !== 'boolean') {
-    throw new InvalidBookError('isAvailable must be a boolean');
-  }
   return {
     title: requiredText(data.title, 'title', BOOK_LIMITS.title),
-    author: requiredText(data.author, 'author', BOOK_LIMITS.author),
-    publisher: requiredText(data.publisher, 'publisher', BOOK_LIMITS.publisher),
-    genre: requiredText(data.genre, 'genre', BOOK_LIMITS.genre),
+    author: requiredReference(data.author, 'author'),
+    publisher: requiredReference(data.publisher, 'publisher'),
+    genre: requiredReference(data.genre, 'genre'),
     price: Price.of(data.price),
-    isAvailable: data.isAvailable,
+    stock: validStock(data.stock),
   };
 }
 
-export function definedChanges(changes: Partial<BookData>): Partial<BookData> {
-  return Object.fromEntries(Object.entries(changes).filter(([, value]) => value !== undefined));
+export function definedChanges<T extends object>(changes: Partial<T>): Partial<T> {
+  return Object.fromEntries(
+    Object.entries(changes).filter(([, value]) => value !== undefined),
+  ) as Partial<T>;
 }

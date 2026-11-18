@@ -91,9 +91,8 @@ model Book {
   id          String    @id @default(uuid()) @db.Uuid
   title       String    @db.VarChar(255)
   price       Decimal   @db.Decimal(12, 2)
-  // Expand phase: is_available still exists; it is replaced by stock > 0 and dropped later.
-  isAvailable Boolean   @default(true) @map("is_available")
-  stock       Int       @default(0) // CHECK (stock >= 0) lives in the migration SQL
+  // Availability is derived (stock > 0), never stored. CHECK (stock >= 0) lives in the migration SQL.
+  stock       Int       @default(0)
   imageUrl    String?   @map("image_url") @db.VarChar(500)
   authorId    String    @map("author_id") @db.Uuid
   publisherId String    @map("publisher_id") @db.Uuid
@@ -111,7 +110,6 @@ model Book {
   @@index([deletedAt, genreId])
   @@index([deletedAt, publisherId])
   @@index([deletedAt, authorId])
-  @@index([deletedAt, isAvailable])
   @@index([deletedAt, stock])
   @@index([deletedAt, createdAt])
   @@index([price])

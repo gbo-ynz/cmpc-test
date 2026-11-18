@@ -5,6 +5,7 @@ export interface BookData {
   readonly publisher: string;
   readonly genre: string;
   readonly price: string;
+  readonly stock: string;
 }
 
 export function uniqueBook(overrides: Partial<BookData> = {}): BookData {
@@ -15,6 +16,7 @@ export function uniqueBook(overrides: Partial<BookData> = {}): BookData {
     publisher: 'Editorial E2E',
     genre: 'Género E2E',
     price: '15990',
+    stock: '5',
     ...overrides,
   };
 }

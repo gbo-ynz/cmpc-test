@@ -136,13 +136,18 @@ describe('layout and routing screens', () => {
     const onLogout = vi.fn();
     render(
       <MemoryRouter>
-        <AppLayout userEmail="admin@cmpc.cl" onLogout={onLogout} />
+        <AppLayout
+          userEmail="admin@cmpc.cl"
+          links={[{ to: '/authors', label: 'Autores' }]}
+          onLogout={onLogout}
+        />
       </MemoryRouter>,
     );
 
     await userEvent.click(screen.getByRole('button', { name: 'Cerrar sesión' }));
 
     expect(screen.getByText('admin@cmpc.cl')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'Autores' })).toHaveAttribute('href', '/authors');
     expect(onLogout).toHaveBeenCalled();
   });
 

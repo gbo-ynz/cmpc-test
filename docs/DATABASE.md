@@ -59,7 +59,6 @@ erDiagram
     uuid id PK
     varchar title
     decimal price "DECIMAL(12,2)"
-    boolean is_available "en retiro: se reemplaza por stock > 0"
     int stock "CHECK >= 0"
     varchar image_url "nullable"
     uuid author_id FK
@@ -101,12 +100,11 @@ erDiagram
 | Índice                                                                              | Consulta que atiende                                                                                                  |
 | ----------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `(deleted_at, genre_id)` / `(deleted_at, publisher_id)` / `(deleted_at, author_id)` | Filtros del listado, siempre combinados con el predicado de soft delete.                                              |
-| `(deleted_at, is_available)`                                                        | Filtro de disponibilidad.                                                                                             |
 | `(deleted_at, created_at)`                                                          | Orden por defecto (más recientes primero) + paginación.                                                               |
 | `price`                                                                             | Ordenamiento por precio.                                                                                              |
 | GIN `gin_trgm_ops` en `books.title`, `authors.name`, `publishers.name`              | Búsqueda de texto libre (`ILIKE '%término%'`): un B-tree no puede atender un comodín inicial; un GIN de trigramas sí. |
 | `audit_logs (entity_type, entity_id)` / `(user_id, created_at)`                     | "Historial de este libro" y "qué hizo este usuario".                                                                  |
-| `(deleted_at, stock)`                                                               | Filtro de disponibilidad basado en stock (reemplaza a `(deleted_at, is_available)`).                                  |
+| `(deleted_at, stock)`                                                               | Filtro de disponibilidad (`stock > 0`).                                                                               |
 | `sales (status, created_at)` / `(created_at)`                                       | Listado de ventas filtrado por estado y ordenado por fecha.                                                           |
 | `sale_items (sale_id, book_id)` único / `(book_id)`                                 | Un libro aparece una sola vez por venta; "ventas de este libro".                                                      |
 
@@ -121,8 +119,8 @@ Operaciones críticas envueltas en una transacción:
 
 | Operación        | Sentencias que se confirman o revierten juntas                                                                 |
 | ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| Crear libro      | upsert de autor + upsert de editorial + upsert de género + insert del libro + insert de auditoría              |
-| Actualizar libro | lectura del libro + upserts + update del libro + insert de auditoría                                           |
+| Crear libro      | insert del libro (autor, editorial y género existentes, por id) + insert de auditoría                          |
+| Actualizar libro | lectura del libro + update del libro + insert de auditoría                                                     |
 | Eliminar libro   | lectura del libro + asignación de `deleted_at` + insert de auditoría                                           |
 | Subir imagen     | update de `image_url` + insert de auditoría (el archivo se elimina si falla la escritura en BD — compensación) |
 
@@ -148,15 +146,16 @@ Nunca renombrar ni eliminar una columna en la misma versión que deja de usarla.
 
 ### Historial de migraciones
 
-| Migración                                 | Qué hace                                                                                                                                                         | Cómo se verificó                                                                                                                   |
-| ----------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `20261117000000_init`                     | Modelo inicial, `pg_trgm` e índices                                                                                                                              | `database-indexes.int-spec.ts`                                                                                                     |
-| `20261118000000_roles_stock_sales_expand` | **Expandir**: `EDITOR` → `USER`, `users.deleted_at`, `books.stock` (calculado desde `is_available`), tablas `sales` y `sale_items`, acciones `COMPLETE`/`CANCEL` | `migrations.int-spec.ts` (datos escritos con el esquema inicial sobreviven) + `prisma migrate diff`: sin diferencias con el schema |
+| Migración                                   | Qué hace                                                                                                                                                         | Cómo se verificó                                                                                                                   |
+| ------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `20261117000000_init`                       | Modelo inicial, `pg_trgm` e índices                                                                                                                              | `database-indexes.int-spec.ts`                                                                                                     |
+| `20261118000000_roles_stock_sales_expand`   | **Expandir**: `EDITOR` → `USER`, `users.deleted_at`, `books.stock` (calculado desde `is_available`), tablas `sales` y `sale_items`, acciones `COMPLETE`/`CANCEL` | `migrations.int-spec.ts` (datos escritos con el esquema inicial sobreviven) + `prisma migrate diff`: sin diferencias con el schema |
+| `20261118010000_drop_is_available_contract` | **Contraer**: elimina `books.is_available` y su índice; la disponibilidad pasa a ser `stock > 0`                                                                 | `migrations.int-spec.ts` › "drops is_available once stock replaces it" + `prisma migrate diff` sin diferencias                     |
 
 La segunda migración se escribió a mano porque Prisma traduce el renombre de un valor de enum como "borrar y
 recrear", lo que perdería los usuarios con ese rol; `ALTER TYPE … RENAME VALUE` conserva cada fila. Después
 de editar a mano, `prisma migrate diff --from-migrations … --to-schema-datamodel …` debe responder
-`No difference detected`. La fase de **contraer** (eliminar `is_available`) llega cuando ningún código lo lea.
+`No difference detected`. La fase de **contraer** llegó en la migración siguiente, cuando ningún código leía ya `is_available`.
 
 ## 4. Portabilidad: ¿qué tan difícil es cambiar la base de datos o el ORM?
 
@@ -203,6 +202,6 @@ sin Prisma.
 ## 5. Evoluciones documentadas (no implementadas)
 
 - **Varios autores por libro**: agregar `book_authors(book_id, author_id, position)`; el agregado pasa a tener `authors: string[]`; cambia el mapper, no los casos de uso.
-- **Stock en lugar de booleano**: agregar `stock INT CHECK (stock >= 0)`; `isAvailable` pasa a ser un getter derivado en el agregado.
+- ~~**Stock en lugar de booleano**~~: implementado (migraciones de expandir y contraer; `isAvailable` es un getter derivado).
 - **Paginación por keyset para exportaciones**: reemplazar los lotes por offset de `streamAll` por `WHERE (created_at, id) < (...)` para páginas de tiempo constante en catálogos muy grandes.
 - **Retención de la auditoría**: particionado mensual de `audit_logs` (`PARTITION BY RANGE (created_at)`).

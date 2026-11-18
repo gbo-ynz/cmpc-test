@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ReferencesModule } from '../references/references.module';
 import { CreateBookUseCase } from './application/create-book.use-case';
 import { DeleteBookUseCase } from './application/delete-book.use-case';
 import { ExportBooksCsvUseCase } from './application/export-books-csv.use-case';
@@ -15,6 +16,8 @@ import { BooksCommandController } from './presentation/books-command.controller'
 import { BooksQueryController } from './presentation/books-query.controller';
 
 @Module({
+  // Books reference authors, publishers and genres managed by the references context.
+  imports: [ReferencesModule],
   controllers: [BooksQueryController, BooksCommandController, BookImageController],
   providers: [
     CreateBookUseCase,

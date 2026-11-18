@@ -7,7 +7,6 @@ const RECORD: BookRecord = {
   id: '0b6d3c39-5b1f-4c9e-9a59-0b1f6b9c0001',
   title: 'Rayuela',
   price: new Prisma.Decimal('16990.50'),
-  isAvailable: true,
   stock: 3,
   imageUrl: null,
   authorId: 'a1',
@@ -25,17 +24,21 @@ describe('book mapper', () => {
   it('maps a database record (with relations) to the aggregate', () => {
     const snapshot = toDomain(RECORD).snapshot();
 
-    expect(snapshot).toMatchObject({ id: RECORD.id, author: 'Julio Cortázar', genre: 'Novela' });
+    expect(snapshot).toMatchObject({
+      id: RECORD.id,
+      author: { name: 'Julio Cortázar' },
+      genre: { name: 'Novela' },
+      stock: 3,
+    });
     expect(snapshot.price.amount).toBe(16990.5);
   });
 
-  it('maps the aggregate to a normalized write model', () => {
-    const data = toPersistence(makeBook({ author: 'Borges' }));
+  it('maps the aggregate to a write model that only connects existing catalog records', () => {
+    const borges = { id: '0a1b2c3d-0000-4000-8000-0000000000bb', name: 'Borges' };
+    const data = toPersistence(makeBook({ author: borges, stock: 7 }));
 
-    expect(data.price).toBe('16990.00');
-    expect(data.author).toEqual({
-      connectOrCreate: { where: { name: 'Borges' }, create: { name: 'Borges' } },
-    });
+    expect(data).toMatchObject({ price: '16990.00', stock: 7 });
+    expect(data.author).toEqual({ connect: { id: borges.id } });
   });
 });
 
@@ -47,7 +50,8 @@ describe('book query builder', () => {
   it('searches case-insensitively in title, author and publisher', () => {
     const where = buildBookWhere({ search: '  cort ', isAvailable: false, genreId: 'g1' });
 
-    expect(where).toMatchObject({ isAvailable: false, genreId: 'g1' });
+    expect(where).toMatchObject({ stock: 0, genreId: 'g1' });
+    expect(buildBookWhere({ isAvailable: true }).stock).toEqual({ gt: 0 });
     expect(where.OR).toHaveLength(3);
     expect(where.OR?.[1]).toEqual({ author: { name: { contains: 'cort', mode: 'insensitive' } } });
   });
@@ -63,7 +67,7 @@ describe('book query builder', () => {
       { field: 'title', direction: 'asc' },
       { field: 'publisher', direction: 'asc' },
       { field: 'genre', direction: 'desc' },
-      { field: 'isAvailable', direction: 'asc' },
+      { field: 'stock', direction: 'asc' },
     ]);
 
     expect(orderBy).toEqual([
@@ -72,7 +76,7 @@ describe('book query builder', () => {
       { title: 'asc' },
       { publisher: { name: 'asc' } },
       { genre: { name: 'desc' } },
-      { isAvailable: 'asc' },
+      { stock: 'asc' },
       { id: 'asc' },
     ]);
   });

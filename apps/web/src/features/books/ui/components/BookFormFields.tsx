@@ -1,48 +1,41 @@
 import type { FieldErrors, UseFormRegister } from 'react-hook-form';
-import { CheckboxField } from '../../../../shared/ui/CheckboxField';
+import { FormSelect } from '../../../../shared/ui/FormSelect';
 import { TextField } from '../../../../shared/ui/TextField';
+import type { BookFormOptions } from '../../application/book-form-options';
 import type { BookFormValues } from '../../domain/book-form.schema';
-import type { Catalog, CatalogItem } from '../../domain/book.types';
 
 interface BookFormFieldsProps {
   register: UseFormRegister<BookFormValues>;
   errors: FieldErrors<BookFormValues>;
-  catalog?: Catalog;
+  options: BookFormOptions;
 }
 
-/** Existing names are suggested (datalist) to avoid near-duplicate authors/genres. */
-function Suggestions({ id, items = [] }: { id: string; items?: CatalogItem[] }) {
-  return (
-    <datalist id={id}>
-      {items.map((item) => (
-        <option key={item.id} value={item.name} />
-      ))}
-    </datalist>
-  );
-}
+// Catalog fields: picked from the admin-managed lists, never typed.
+const CATALOG_FIELDS = [
+  { name: 'authorId', label: 'Autor', placeholder: 'Seleccione un autor', options: 'authors' },
+  {
+    name: 'publisherId',
+    label: 'Editorial',
+    placeholder: 'Seleccione una editorial',
+    options: 'publishers',
+  },
+  { name: 'genreId', label: 'Género', placeholder: 'Seleccione un género', options: 'genres' },
+] as const;
 
-export function BookFormFields({ register, errors, catalog }: BookFormFieldsProps) {
+export function BookFormFields({ register, errors, options }: BookFormFieldsProps) {
   return (
     <div className="form__grid">
       <TextField label="Título" error={errors.title?.message} {...register('title')} />
-      <TextField
-        label="Autor"
-        list="authors-list"
-        error={errors.author?.message}
-        {...register('author')}
-      />
-      <TextField
-        label="Editorial"
-        list="publishers-list"
-        error={errors.publisher?.message}
-        {...register('publisher')}
-      />
-      <TextField
-        label="Género"
-        list="genres-list"
-        error={errors.genre?.message}
-        {...register('genre')}
-      />
+      {CATALOG_FIELDS.map((field) => (
+        <FormSelect
+          key={field.name}
+          label={field.label}
+          placeholder={field.placeholder}
+          options={options[field.options]}
+          error={errors[field.name]?.message}
+          {...register(field.name)}
+        />
+      ))}
       <TextField
         label="Precio (CLP)"
         type="number"
@@ -52,10 +45,15 @@ export function BookFormFields({ register, errors, catalog }: BookFormFieldsProp
         error={errors.price?.message}
         {...register('price', { valueAsNumber: true })}
       />
-      <CheckboxField label="Disponible para la venta" {...register('isAvailable')} />
-      <Suggestions id="authors-list" items={catalog?.authors} />
-      <Suggestions id="publishers-list" items={catalog?.publishers} />
-      <Suggestions id="genres-list" items={catalog?.genres} />
+      <TextField
+        label="Stock (unidades)"
+        type="number"
+        step="1"
+        min="0"
+        inputMode="numeric"
+        error={errors.stock?.message}
+        {...register('stock', { valueAsNumber: true })}
+      />
     </div>
   );
 }

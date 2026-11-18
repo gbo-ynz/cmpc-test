@@ -7,7 +7,7 @@ const COLUMNS: ReadonlyArray<{ field: SortField; label: string }> = [
   { field: 'publisher', label: 'Editorial' },
   { field: 'genre', label: 'Género' },
   { field: 'price', label: 'Precio' },
-  { field: 'isAvailable', label: 'Estado' },
+  { field: 'stock', label: 'Stock' },
 ];
 
 interface BooksTableHeadProps {
@@ -30,6 +30,7 @@ export function BooksTableHead({ sort, onSort }: BooksTableHeadProps) {
           {COLUMNS.map(({ field, label }) => (
             <SortableHeader key={field} field={field} label={label} sort={sort} onSort={onSort} />
           ))}
+          <th scope="col">Estado</th>
           <th scope="col">
             <span className="sr-only">Acciones</span>
           </th>

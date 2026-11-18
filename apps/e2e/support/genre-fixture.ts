@@ -23,8 +23,9 @@ export function useGenreBooks(test: typeof base): { genre: string; list: () => B
         genre,
         title: `E2E Lista ${index} ${genre}`,
         price: String(price),
+        stock: index % 2 === 0 ? '3' : '0', // odd indexes are out of stock
       });
-      ids.push(await api.create(book, index % 2 === 0));
+      ids.push(await api.create(book));
     }
   });
 

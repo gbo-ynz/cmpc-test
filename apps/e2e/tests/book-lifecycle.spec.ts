@@ -1,12 +1,18 @@
 import { expect, test } from '@playwright/test';
+import { BooksApi } from '../support/books-api';
 import { BookDetailPage } from '../support/pages/book-detail.page';
 import { BookFormPage } from '../support/pages/book-form.page';
 import { BooksListPage } from '../support/pages/books-list.page';
 import { COVER_IMAGE, uniqueBook } from '../support/test-data';
 
 // Editing has its own spec (book-edit.spec.ts): saving now stays on the form.
-test('creates a book with a cover, shows its detail and deletes it', async ({ page }) => {
+test('creates a book with a cover, shows its detail and deletes it', async ({ page, request }) => {
   const book = uniqueBook({ genre: `Género E2E ${Date.now()}` });
+  // The form only offers existing catalog records: make sure this book's ones exist.
+  const api = new BooksApi(request);
+  await api.ensureReference('authors', book.author);
+  await api.ensureReference('publishers', book.publisher);
+  await api.ensureReference('genres', book.genre);
   const list = new BooksListPage(page);
   const form = new BookFormPage(page);
   const detail = new BookDetailPage(page);

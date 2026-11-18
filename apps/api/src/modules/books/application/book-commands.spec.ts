@@ -2,8 +2,9 @@ import {
   ACTOR_ID,
   FakeAuditLogger,
   FakeTransactionManager,
-  bookData,
+  bookInput,
   makeBook,
+  seededReferences,
 } from '../../../test-utils/fakes';
 import { InMemoryBookRepository } from '../../../test-utils/in-memory-book.repository';
 import { BookNotFoundError, InvalidBookError } from '../domain/book.errors';
@@ -13,22 +14,30 @@ import { UpdateBookUseCase } from './update-book.use-case';
 
 function setup(seed = [makeBook()]) {
   const books = new InMemoryBookRepository(seed);
+  const references = seededReferences();
   const transactions = new FakeTransactionManager();
   const audit = new FakeAuditLogger();
-  return { books, transactions, audit, existing: seed[0] };
+  const create = new CreateBookUseCase(books, references, transactions, audit);
+  const update = new UpdateBookUseCase(books, references, transactions, audit);
+  return { books, references, transactions, audit, create, update, existing: seed[0] };
 }
 
 describe('CreateBookUseCase', () => {
-  it('persists the book and audits inside one transaction', async () => {
-    const { books, transactions, audit } = setup([]);
-    const useCase = new CreateBookUseCase(books, transactions, audit);
+  it('resolves the catalog ids, persists the book and audits inside one transaction', async () => {
+    const { books, transactions, audit, create } = setup([]);
 
-    const view = await useCase.execute({
-      data: bookData({ title: 'Ficciones' }),
+    const view = await create.execute({
+      data: bookInput({ title: 'Ficciones' }),
       actorId: ACTOR_ID,
     });
 
-    expect(view).toMatchObject({ title: 'Ficciones', price: 16990, imageUrl: null });
+    expect(view).toMatchObject({
+      title: 'Ficciones',
+      author: 'Julio Cortázar',
+      genre: 'Novela',
+      stock: 5,
+      isAvailable: true,
+    });
     expect(books.stored(view.id)).toBeDefined();
     expect(transactions.runs).toBe(1);
     expect(audit.entries[0]).toMatchObject({
@@ -38,42 +47,65 @@ describe('CreateBookUseCase', () => {
     });
   });
 
-  it('does not persist nor audit invalid books', async () => {
-    const { books, transactions, audit } = setup([]);
-    const useCase = new CreateBookUseCase(books, transactions, audit);
+  it('rejects an unknown author, publisher or genre without persisting anything', async () => {
+    const { create, audit } = setup([]);
+    const unknown = '0a1b2c3d-0000-4000-8000-0000000000ff';
 
     await expect(
-      useCase.execute({ data: bookData({ price: -1 }), actorId: ACTOR_ID }),
+      create.execute({ data: bookInput({ genreId: unknown }), actorId: ACTOR_ID }),
+    ).rejects.toThrow(InvalidBookError);
+    expect(audit.entries).toHaveLength(0);
+  });
+
+  it('does not persist nor audit invalid books', async () => {
+    const { create, audit } = setup([]);
+
+    await expect(
+      create.execute({ data: bookInput({ price: -1 }), actorId: ACTOR_ID }),
+    ).rejects.toThrow(InvalidBookError);
+    await expect(
+      create.execute({ data: bookInput({ stock: 1.5 }), actorId: ACTOR_ID }),
     ).rejects.toThrow(InvalidBookError);
     expect(audit.entries).toHaveLength(0);
   });
 });
 
 describe('UpdateBookUseCase', () => {
-  it('applies partial changes and audits them', async () => {
-    const { books, transactions, audit, existing } = setup();
-    const useCase = new UpdateBookUseCase(books, transactions, audit);
+  it('applies partial changes: with no stock the book is no longer available', async () => {
+    const { audit, update, existing } = setup();
 
-    const view = await useCase.execute({
+    const view = await update.execute({
       id: existing.id,
-      changes: { isAvailable: false },
+      changes: { stock: 0 },
       actorId: ACTOR_ID,
     });
 
-    expect(view.isAvailable).toBe(false);
+    expect(view).toMatchObject({ stock: 0, isAvailable: false });
     expect(audit.entries[0]).toMatchObject({
       action: 'UPDATE',
-      metadata: { changes: { isAvailable: false } },
+      metadata: { changes: { stock: 0 } },
     });
   });
 
-  it('fails for unknown books', async () => {
-    const { books, transactions, audit } = setup();
-    const useCase = new UpdateBookUseCase(books, transactions, audit);
+  it('moves the book to another existing genre', async () => {
+    const { references, update, existing } = setup();
+    const poetry = references.seed('genres', 'Poesía');
 
-    await expect(
-      useCase.execute({ id: 'missing', changes: {}, actorId: ACTOR_ID }),
-    ).rejects.toThrow(BookNotFoundError);
+    const view = await update.execute({
+      id: existing.id,
+      changes: { genreId: poetry.id },
+      actorId: ACTOR_ID,
+    });
+
+    expect(view).toMatchObject({ genreId: poetry.id, genre: 'Poesía' });
+  });
+
+  it('fails for unknown books', async () => {
+    const { update } = setup();
+
+    await expect(update.execute({ id: 'missing', changes: {}, actorId: ACTOR_ID })).rejects.toThrow(
+      BookNotFoundError,
+    );
   });
 });
 

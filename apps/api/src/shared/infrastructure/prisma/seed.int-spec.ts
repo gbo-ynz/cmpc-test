@@ -29,11 +29,11 @@ it('loads one user per role and the demo catalog into an empty database', async 
   ]);
 });
 
-it('loads stock, keeping availability consistent with it (stock > 0)', async () => {
-  const books = await db.prisma.book.findMany({ select: { stock: true, isAvailable: true } });
+it('loads stock for every book, some of them out of stock', async () => {
+  const books = await db.prisma.book.findMany({ select: { stock: true } });
 
   expect(books.filter((book) => book.stock === 0)).toHaveLength(OUT_OF_STOCK_BOOKS);
-  expect(books.every((book) => book.isAvailable === book.stock > 0)).toBe(true);
+  expect(books.every((book) => book.stock >= 0)).toBe(true);
 });
 
 it('is idempotent: running it again changes nothing', async () => {

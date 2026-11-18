@@ -33,6 +33,7 @@ export const BookRow = memo(function BookRow({ book }: { book: Book }) {
       <td>{book.publisher}</td>
       <td>{book.genre}</td>
       <td className="table__number">{formatPrice(book.price)}</td>
+      <td className="table__number">{book.stock}</td>
       <td>
         <AvailabilityBadge isAvailable={book.isAvailable} />
       </td>

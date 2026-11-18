@@ -11,7 +11,7 @@ type OrderBy = Prisma.BookOrderByWithRelationInput;
 const SORT_COLUMNS: Record<BookSortField, (direction: SortDirection) => OrderBy> = {
   title: (direction) => ({ title: direction }),
   price: (direction) => ({ price: direction }),
-  isAvailable: (direction) => ({ isAvailable: direction }),
+  stock: (direction) => ({ stock: direction }),
   createdAt: (direction) => ({ createdAt: direction }),
   author: (direction) => ({ author: { name: direction } }),
   publisher: (direction) => ({ publisher: { name: direction } }),
@@ -22,6 +22,12 @@ const DEFAULT_SORT: readonly BookSort[] = [{ field: 'createdAt', direction: 'des
 
 const contains = (value: string) => ({ contains: value, mode: Prisma.QueryMode.insensitive });
 
+/** Availability is derived from stock (served by the (deleted_at, stock) index). */
+const availability = (isAvailable?: boolean): Prisma.IntFilter | number | undefined => {
+  if (isAvailable === undefined) return undefined;
+  return isAvailable ? { gt: 0 } : 0;
+};
+
 /** `undefined` values are ignored by Prisma, so absent filters simply vanish. */
 export function buildBookWhere(filters: BookFilters): Prisma.BookWhereInput {
   const search = filters.search?.trim();
@@ -30,7 +36,7 @@ export function buildBookWhere(filters: BookFilters): Prisma.BookWhereInput {
     genreId: filters.genreId,
     publisherId: filters.publisherId,
     authorId: filters.authorId,
-    isAvailable: filters.isAvailable,
+    stock: availability(filters.isAvailable),
     OR: search
       ? [
           { title: contains(search) },

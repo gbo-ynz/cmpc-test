@@ -36,10 +36,11 @@ describe('bookFormSchema', () => {
   const valid = {
     ...EMPTY_BOOK_FORM,
     title: 'Rayuela',
-    author: 'Cortázar',
-    publisher: 'Sudamericana',
-    genre: 'Novela',
+    authorId: 'a1',
+    publisherId: 'p1',
+    genreId: 'g1',
     price: 19.99,
+    stock: 4,
   };
 
   it('accepts a valid book', () => {
@@ -51,7 +52,10 @@ describe('bookFormSchema', () => {
     [{ price: Number.NaN }, 'Ingrese el precio'],
     [{ price: -1 }, 'El precio no puede ser negativo'],
     [{ price: 1.999 }, 'Use como máximo 2 decimales'],
-    [{ genre: 'x'.repeat(81) }, 'Máximo 80 caracteres'],
+    [{ title: 'x'.repeat(256) }, 'Máximo 255 caracteres'],
+    [{ genreId: '' }, 'Seleccione el género'],
+    [{ stock: -1 }, 'El stock no puede ser negativo'],
+    [{ stock: 2.5 }, 'El stock debe ser un número entero'],
   ])('rejects %o', (override, message) => {
     const result = bookFormSchema.safeParse({ ...valid, ...override });
 

@@ -22,14 +22,32 @@ vi.mock('../../infrastructure/books.api', () => ({
   },
 }));
 
+vi.mock('../../../references/infrastructure/references.api', () => ({
+  referencesApi: {
+    list: vi.fn((kind: string) =>
+      Promise.resolve(
+        {
+          authors: [{ id: 'a1', name: 'Julio Cortázar', activeBooks: 1 }],
+          publishers: [{ id: 'p1', name: 'Sudamericana', activeBooks: 1 }],
+          genres: [{ id: 'g1', name: 'Novela', activeBooks: 1 }],
+        }[kind],
+      ),
+    ),
+  },
+}));
+
 const api = vi.mocked(booksApi);
 const BOOK: Book = {
   id: 'b1',
   title: 'Rayuela',
+  authorId: 'a1',
   author: 'Julio Cortázar',
+  publisherId: 'p1',
   publisher: 'Sudamericana',
+  genreId: 'g1',
   genre: 'Novela',
   price: 16990,
+  stock: 3,
   isAvailable: true,
   imageUrl: null,
   createdAt: '2026-01-01T00:00:00.000Z',
@@ -94,10 +112,18 @@ describe('BookDetailPage', () => {
 describe('BookCreatePage', () => {
   async function submitNewBook() {
     await userEvent.type(screen.getByLabelText('Título'), 'Rayuela');
-    await userEvent.type(screen.getByLabelText('Autor'), 'Cortázar');
-    await userEvent.type(screen.getByLabelText('Editorial'), 'Sudamericana');
-    await userEvent.type(screen.getByLabelText('Género'), 'Novela');
+    await screen.findByRole('option', { name: 'Julio Cortázar' }); // catalogs load asynchronously
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Autor' }),
+      'Julio Cortázar',
+    );
+    await userEvent.selectOptions(
+      screen.getByRole('combobox', { name: 'Editorial' }),
+      'Sudamericana',
+    );
+    await userEvent.selectOptions(screen.getByRole('combobox', { name: 'Género' }), 'Novela');
     await userEvent.type(screen.getByLabelText('Precio (CLP)'), '5');
+    await userEvent.type(screen.getByLabelText('Stock (unidades)'), '2');
     await waitFor(() => expect(screen.getByRole('button', { name: 'Crear libro' })).toBeEnabled());
     await userEvent.click(screen.getByRole('button', { name: 'Crear libro' }));
   }
@@ -172,7 +198,7 @@ describe('BookEditPage', () => {
     api.update.mockRejectedValue(new ApiError('Conflict', 409, 'CONFLICT'));
     renderWithProviders(<BookEditPage />, { route: '/books/b1/edit', path: '/books/:id/edit' });
 
-    await userEvent.click(await screen.findByLabelText('Disponible para la venta'));
+    await userEvent.type(await screen.findByLabelText('Stock (unidades)'), '0');
     await waitFor(() =>
       expect(screen.getByRole('button', { name: 'Guardar cambios' })).toBeEnabled(),
     );

@@ -14,6 +14,7 @@ export function BookDetailCard({ book, actions }: BookDetailCardProps) {
     ['Editorial', book.publisher],
     ['Género', book.genre],
     ['Precio', formatPrice(book.price)],
+    ['Stock', `${book.stock} ${book.stock === 1 ? 'unidad' : 'unidades'}`],
     ['Fecha de alta', formatDate(book.createdAt)],
     ['Última actualización', formatDate(book.updatedAt)],
   ];

@@ -17,9 +17,11 @@ describe('Book aggregate', () => {
 
   it.each<[Partial<BookData>, string]>([
     [{ title: '   ' }, 'title is required'],
-    [{ author: 'x'.repeat(161) }, 'author must be at most 160 characters'],
-    [{ genre: undefined }, 'genre is required'],
-    [{ isAvailable: 'yes' as unknown as boolean }, 'isAvailable must be a boolean'],
+    [{ title: 'x'.repeat(256) }, 'title must be at most 255 characters'],
+    [{ author: undefined }, 'author is required'],
+    [{ genre: { id: '', name: 'Sin id' } }, 'genre is required'],
+    [{ stock: -1 }, 'stock must be a whole number between 0 and 1000000'],
+    [{ stock: 2.5 }, 'stock must be a whole number between 0 and 1000000'],
   ])('enforces invariants (%#)', (override, message) => {
     expect(() => Book.create(bookData(override))).toThrow(new InvalidBookError(message));
   });
