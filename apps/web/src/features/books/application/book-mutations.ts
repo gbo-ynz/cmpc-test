@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { datedFileName, downloadBlob } from '../../../shared/lib/download';
 import type { BookFilters, BookInput, SortRule } from '../domain/book.types';
+import { referenceKeys } from '../../references/application/reference-hooks';
 import { booksApi } from '../infrastructure/books.api';
 import { bookKeys } from './book-keys';
 
@@ -22,6 +23,7 @@ export function useSaveBook() {
       return Promise.all([
         queryClient.invalidateQueries({ queryKey: bookKeys.lists() }),
         queryClient.invalidateQueries({ queryKey: bookKeys.catalog }),
+        queryClient.invalidateQueries({ queryKey: referenceKeys.all }),
       ]);
     },
   });
@@ -33,7 +35,10 @@ export function useDeleteBook() {
     mutationFn: (id: string) => booksApi.remove(id),
     onSuccess: (_result, id) => {
       queryClient.removeQueries({ queryKey: bookKeys.detail(id) });
-      return queryClient.invalidateQueries({ queryKey: bookKeys.lists() });
+      return Promise.all([
+        queryClient.invalidateQueries({ queryKey: bookKeys.lists() }),
+        queryClient.invalidateQueries({ queryKey: referenceKeys.all }),
+      ]);
     },
   });
 }

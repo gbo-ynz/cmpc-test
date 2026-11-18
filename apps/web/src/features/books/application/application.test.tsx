@@ -158,6 +158,28 @@ describe('mutation hooks', () => {
     expect(invalidate).toHaveBeenCalledWith({ queryKey: ['books', 'list'] });
   });
 
+  it('refreshes the catalog counters of authors, publishers and genres after saving', async () => {
+    api.create.mockResolvedValue(BOOK);
+    const { Wrapper, client } = createWrapper();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useSaveBook(), { wrapper: Wrapper });
+
+    await act(() => result.current.mutateAsync({ input: INPUT, image: null }));
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['references'] });
+  });
+
+  it('refreshes the catalog counters after deleting a book', async () => {
+    api.remove.mockResolvedValue(undefined);
+    const { Wrapper, client } = createWrapper();
+    const invalidate = vi.spyOn(client, 'invalidateQueries');
+    const { result } = renderHook(() => useDeleteBook(), { wrapper: Wrapper });
+
+    await act(() => result.current.mutateAsync('b1'));
+
+    expect(invalidate).toHaveBeenCalledWith({ queryKey: ['references'] });
+  });
+
   it('updates a book and then uploads the new image', async () => {
     api.update.mockResolvedValue(BOOK);
     api.uploadImage.mockResolvedValue({ ...BOOK, imageUrl: '/api/uploads/x.png' });
