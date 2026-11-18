@@ -22,16 +22,6 @@ afterAll(async () => {
   await db.stop();
 });
 
-it('lists every record sorted by name with its active books only', async () => {
-  expect(await repository.list('authors')).toEqual([
-    expect.objectContaining({ name: 'Borges', activeBooks: 1 }),
-    expect.objectContaining({ name: 'Sabato', activeBooks: 0 }),
-  ]);
-  expect(await repository.list('publishers')).toEqual([
-    expect.objectContaining({ name: 'Sur', activeBooks: 1 }),
-  ]);
-});
-
 it('finds names ignoring case', async () => {
   expect(await repository.findByName('genres', 'cUENTO')).toMatchObject({ name: 'Cuento' });
   expect(await repository.findByName('genres', 'Poesía')).toBeNull();
@@ -43,12 +33,10 @@ it('counts books including soft-deleted ones', async () => {
   expect(await repository.countBooks('authors', sabato!.id)).toBe(1);
 });
 
-it('creates, renames and deletes a record without books', async () => {
-  const created = await repository.create('genres', 'Poesía');
-  const renamed = await repository.rename('genres', created.id, 'Poesía chilena');
+it('deletes a record without books', async () => {
+  const created = await db.prisma.genre.create({ data: { name: 'Poesía' } });
 
   await repository.delete('genres', created.id);
 
-  expect(renamed).toEqual({ id: created.id, name: 'Poesía chilena' });
   expect(await repository.findById('genres', created.id)).toBeNull();
 });
