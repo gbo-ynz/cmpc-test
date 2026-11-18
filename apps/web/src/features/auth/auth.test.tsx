@@ -149,12 +149,19 @@ describe('AuthenticatedLayout menu', () => {
   it('shows the administration sections to an administrator', () => {
     renderWithProviders(<AuthenticatedLayout />, { route: '/books', path: '/books' });
 
-    for (const section of ['Inventario', 'Autores', 'Editoriales', 'Géneros', 'Usuarios']) {
+    for (const section of [
+      'Inventario',
+      'Ventas',
+      'Autores',
+      'Editoriales',
+      'Géneros',
+      'Usuarios',
+    ]) {
       expect(within(menu()).getByRole('link', { name: section })).toBeInTheDocument();
     }
   });
 
-  it('shows only the inventory to a regular user', () => {
+  it('shows only the inventory and the sales to a regular user', () => {
     renderWithProviders(<AuthenticatedLayout />, {
       route: '/books',
       path: '/books',
@@ -164,7 +171,7 @@ describe('AuthenticatedLayout menu', () => {
     const labels = within(menu())
       .getAllByRole('link')
       .map((link) => link.textContent);
-    expect(labels).toEqual(['Inventario']);
+    expect(labels).toEqual(['Inventario', 'Ventas']);
   });
 });
 

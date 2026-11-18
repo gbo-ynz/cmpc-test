@@ -1,5 +1,5 @@
 import { keepPreviousData, useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toApiError } from '../../../shared/api/api-error';
+import { errorText } from '../../../shared/api/api-error';
 import { usePageState } from '../../../shared/lib/usePageState';
 import type { UserInput, UserPageParams } from '../domain/user.types';
 import { usersApi } from '../infrastructure/users.api';
@@ -40,7 +40,5 @@ export const useUpdateUser = (id: string) =>
 export const useDeactivateUser = () => useUserMutation((id: string) => usersApi.remove(id));
 
 /** A 409 means something different per action; anything else uses the generic copy. */
-export function userErrorText(error: unknown, onConflict: string): string {
-  const apiError = toApiError(error);
-  return apiError.code === 'CONFLICT' ? onConflict : apiError.message;
-}
+export const userErrorText = (error: unknown, onConflict: string): string =>
+  errorText(error, { CONFLICT: onConflict });

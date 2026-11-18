@@ -3,6 +3,7 @@ import { LoginPage } from '../features/auth/ui/LoginPage';
 import { RequireAuth } from '../features/auth/ui/RequireAuth';
 import { RequireRole } from '../features/auth/ui/RequireRole';
 import { BooksListPage } from '../features/books/ui/pages/BooksListPage';
+import { SalesPage } from '../features/sales/ui/SalesPage';
 import { NotFoundPage } from '../shared/ui/NotFoundPage';
 import { RouteError } from '../shared/ui/RouteError';
 import { adminRoutes } from './admin-routes';
@@ -31,6 +32,15 @@ export const routes: RouteObject[] = [
           {
             path: 'books/:id/edit',
             lazy: lazyPage(() => import('../features/books/ui/pages/BookEditPage')),
+          },
+          { path: 'sales', element: <SalesPage /> },
+          {
+            path: 'sales/new',
+            lazy: lazyPage(() => import('../features/sales/ui/SaleCreatePage')),
+          },
+          {
+            path: 'sales/:id',
+            lazy: lazyPage(() => import('../features/sales/ui/SaleDetailPage')),
           },
           { element: <RequireRole role="ADMIN" />, children: adminRoutes },
         ],

@@ -672,3 +672,55 @@ a.icon-button {
     transition: none;
   }
 }
+
+.badge--warning {
+  background: #fdf3d8;
+  color: #7a5a00;
+}
+.sales-filter {
+  max-width: 320px;
+  padding: var(--space);
+}
+.book-picker__results {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.book-picker__results li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 0;
+  border-top: 1px solid var(--color-border);
+}
+.quantity-input {
+  width: 5rem;
+  text-align: right;
+}
+.sale-info {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--space);
+  margin: 0;
+}
+.sale-info dt {
+  color: var(--color-muted);
+  font-size: 0.85rem;
+}
+.sale-info dd {
+  margin: 0;
+  font-weight: 600;
+}
+.sale-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  gap: var(--space);
+}
+.complete-panel {
+  display: flex;
+  align-items: flex-end;
+  flex-wrap: wrap;
+  gap: var(--space);
+}

@@ -4,7 +4,10 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../features/auth/application/useAuth';
 import { AppLayout, type NavItem } from '../shared/ui/AppLayout';
 
-const EVERYONE: readonly NavItem[] = [{ to: '/books', label: 'Inventario' }];
+const EVERYONE: readonly NavItem[] = [
+  { to: '/books', label: 'Inventario' },
+  { to: '/sales', label: 'Ventas' },
+];
 const ADMIN_ONLY: readonly NavItem[] = [
   { to: '/authors', label: 'Autores' },
   { to: '/publishers', label: 'Editoriales' },

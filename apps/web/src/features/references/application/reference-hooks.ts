@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { toApiError } from '../../../shared/api/api-error';
+import { errorText } from '../../../shared/api/api-error';
 import { datedFileName, downloadBlob } from '../../../shared/lib/download';
 import { bookKeys } from '../../books/application/book-keys';
 import { EXPORT_FILE_PREFIX, type ReferenceKind } from '../domain/reference.types';
@@ -43,7 +43,5 @@ export const useExportReferences = (kind: ReferenceKind) =>
   });
 
 /** A 409 means something different per action; anything else uses the generic copy. */
-export function referenceErrorText(error: unknown, onConflict: string): string {
-  const apiError = toApiError(error);
-  return apiError.code === 'CONFLICT' ? onConflict : apiError.message;
-}
+export const referenceErrorText = (error: unknown, onConflict: string): string =>
+  errorText(error, { CONFLICT: onConflict });

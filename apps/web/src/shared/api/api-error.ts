@@ -37,3 +37,9 @@ export function toApiError(error: unknown): ApiError {
   if (isAxiosError<ErrorBody>(error)) return fromAxiosError(error);
   return new ApiError(DEFAULT_ERROR_MESSAGE, 0, 'UNKNOWN');
 }
+
+/** Per-screen wording for specific codes: a 409 or a 400 mean something different per action. */
+export function errorText(error: unknown, byCode: Readonly<Record<string, string>>): string {
+  const apiError = toApiError(error);
+  return byCode[apiError.code] ?? apiError.message;
+}

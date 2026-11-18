@@ -43,13 +43,15 @@ test('a genre that still has books cannot be deleted', async ({ page }) => {
 test.describe('regular user', () => {
   test.use({ storageState: { cookies: [], origins: [] } });
 
-  test('sees only the inventory and cannot open administration pages', async ({ page }) => {
+  test('sees only the inventory and sales, and cannot open administration pages', async ({
+    page,
+  }) => {
     const login = new LoginPage(page);
     await login.goto();
     await login.login(REGULAR_USER.email, REGULAR_USER.password);
 
     const menu = page.getByRole('navigation', { name: 'Principal' });
-    await expect(menu.getByRole('link')).toHaveText(['Inventario']);
+    await expect(menu.getByRole('link')).toHaveText(['Inventario', 'Ventas']);
     await page.goto('/authors');
     await expect(
       page.getByRole('heading', { name: 'No tiene permisos para ver esta página' }),

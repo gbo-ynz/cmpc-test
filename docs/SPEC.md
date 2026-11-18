@@ -277,7 +277,7 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 ## Ampliación: administración y perfiles
 
-Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) exportación de catálogos ✅ (RF-21) y administración de usuarios ✅ (RF-10); ventas y dashboard 🛠 (fases 3 a 5).
+Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) exportación de catálogos ✅ (RF-21) administración de usuarios ✅ (RF-10) y ventas ✅ (RF-16 y RF-17); dashboard 🛠 (fases 4 y 5).
 
 ### Perfiles y permisos
 
@@ -396,7 +396,9 @@ Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts
 | 3   | El archivo abre bien en Excel (BOM UTF-8), cita las comas y saltos de línea, y neutraliza celdas que una planilla ejecutaría como fórmula (`=`, `+`, `-`, `@`)                                                                            |
 | 4   | Solo los administradores pueden exportar (otros perfiles reciben 403) y cada exportación queda en `audit_logs` como `EXPORT`, con la cantidad de filas                                                                                    |
 
-### RF-16 · Ventas 🛠
+### RF-16 · Ventas ✅
+
+Verificado por: API `sale-builder.spec.ts` (snapshot de precios, total en centavos, líneas repetidas, libros inactivos, cantidad ≤ stock), `sales.spec.ts`, `sales.http.spec.ts` (permisos, 201/400/404, paginación y filtro por estado); INT `prisma-sale.repository.int-spec.ts`; WEB `sales.test.tsx` (listado, filtro, nueva venta con cantidad limitada por stock), `sale-draft.test.ts`, `sales.api.test.ts`; E2E `sales.spec.ts`.
 
 | CA  | Criterio de aceptación                                                                                                                                    |
 | --- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -406,7 +408,9 @@ Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts
 | 4   | El listado de ventas tiene paginación del lado del servidor y filtro por estado, y muestra fecha, total, estado y quién la creó                           |
 | 5   | El detalle muestra las líneas, el total, el estado y, según el estado, las acciones disponibles                                                           |
 
-### RF-17 · Completar y cancelar ventas 🛠
+### RF-17 · Completar y cancelar ventas ✅
+
+Verificado por: API `sales.spec.ts` (descuento por línea, venta final, stock insuficiente o libro eliminado), `sales.http.spec.ts` (409 al repetir la acción o sin stock); INT `prisma-sale-stock.int-spec.ts` (descuentos concurrentes sobre el último ejemplar: solo uno se aplica; con una línea sin stock la transacción revierte y no se descuenta nada), `prisma-sale.repository.int-spec.ts` (la transición solo mueve una venta pendiente); WEB `sales.test.tsx` (método de pago obligatorio, confirmación al cancelar, sin acciones en ventas finales); E2E `sales.spec.ts` (completar descuenta el stock, cancelar no lo toca, libro eliminado → 409 sin descontar).
 
 | CA  | Criterio de aceptación                                                                                                                                            |
 | --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
