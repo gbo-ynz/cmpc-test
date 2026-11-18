@@ -112,6 +112,10 @@ erDiagram
 | `sales (status, created_at)` / `(created_at)`                                       | Listado de ventas filtrado por estado y ordenado por fecha.                                                           |
 | `sale_items (sale_id, book_id)` único / `(book_id)`                                 | Un libro aparece una sola vez por venta; "ventas de este libro".                                                      |
 
+Los planes de ejecución (`EXPLAIN` sobre 2.000 filas con `ANALYZE`) están verificados con tests de integración:
+`database-indexes.int-spec.ts` para libros y `sales-indexes.int-spec.ts` para ventas y disponibilidad. El `SUM(precio × stock)`
+del dashboard recorre los libros con stock (una pasada); no necesita índice propio con este volumen.
+
 ## 2. Transacciones
 
 Los casos de uso llaman al puerto `TransactionManager`; el adaptador de Prisma abre un `$transaction`
@@ -121,12 +125,16 @@ de `run()` se suma a la misma transacción sin pasar un argumento `tx`**.
 
 Operaciones críticas envueltas en una transacción:
 
-| Operación        | Sentencias que se confirman o revierten juntas                                                                 |
-| ---------------- | -------------------------------------------------------------------------------------------------------------- |
-| Crear libro      | insert del libro (autor, editorial y género existentes, por id) + insert de auditoría                          |
-| Actualizar libro | lectura del libro + update del libro + insert de auditoría                                                     |
-| Eliminar libro   | lectura del libro + asignación de `deleted_at` + insert de auditoría                                           |
-| Subir imagen     | update de `image_url` + insert de auditoría (el archivo se elimina si falla la escritura en BD — compensación) |
+| Operación                                      | Sentencias que se confirman o revierten juntas                                                                                                                                                        |
+| ---------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Crear libro                                    | insert del libro (autor, editorial y género existentes, por id) + insert de auditoría                                                                                                                 |
+| Actualizar libro                               | lectura del libro + update del libro + insert de auditoría                                                                                                                                            |
+| Eliminar libro                                 | lectura del libro + asignación de `deleted_at` + insert de auditoría                                                                                                                                  |
+| Subir imagen                                   | update de `image_url` + insert de auditoría (el archivo se elimina si falla la escritura en BD — compensación)                                                                                        |
+| Crear venta                                    | lectura de los libros vendibles + insert de la venta y sus líneas (con el precio copiado) + insert de auditoría                                                                                       |
+| Completar venta                                | lectura de la venta + por cada línea `UPDATE books SET stock = stock - n WHERE stock >= n` + cambio de estado condicionado a `PENDING` + auditoría. Si una línea no tiene stock, **se revierte todo** |
+| Cancelar venta                                 | cambio de estado condicionado a `PENDING` + insert de auditoría (el stock no se toca)                                                                                                                 |
+| Crear, editar o desactivar usuario / catálogos | lectura + escritura + insert de auditoría; la contraseña nunca se guarda en la auditoría                                                                                                              |
 
 ## 3. Flujo de migraciones
 

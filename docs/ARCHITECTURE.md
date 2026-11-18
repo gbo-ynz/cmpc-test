@@ -42,10 +42,14 @@ src/
 │   ├── application/               puertos transversales: TransactionManager, AuditLogger
 │   └── infrastructure/            Prisma (transacciones con ALS), interceptores, filtro, decoradores
 └── modules/                       una carpeta por bounded context
-    ├── books/   domain · application · infrastructure · presentation
-    ├── catalog/ domain · application · infrastructure · presentation
-    ├── auth/    domain · application · infrastructure · presentation
-    └── audit/   infrastructure (implementa el puerto compartido AuditLogger)
+    ├── books/       domain · application · infrastructure · presentation   inventario, portadas, CSV
+    ├── catalog/     domain · application · infrastructure · presentation   opciones de los filtros
+    ├── references/  domain · application · infrastructure · presentation   autores, editoriales y géneros
+    ├── auth/        domain · application · infrastructure · presentation   login, JWT y perfiles
+    ├── users/       domain · application · infrastructure · presentation   administración de usuarios
+    ├── sales/       domain · application · infrastructure · presentation   ventas y control de stock
+    ├── dashboard/   domain · application · infrastructure · presentation   cifras por perfil (solo lectura)
+    └── audit/       infrastructure (implementa el puerto compartido AuditLogger)
 ```
 
 ### La regla de dependencias

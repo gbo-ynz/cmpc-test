@@ -1,8 +1,10 @@
 # CMPC-libros — Plataforma de inventario de libros
 
-Aplicación full-stack para digitalizar el inventario de la tienda CMPC-libros: autenticación JWT, CRUD de
-libros con imagen de portada, filtrado avanzado, ordenamiento por múltiples campos, paginación del lado del
-servidor, búsqueda con debounce, exportación a CSV, soft delete y registro de auditoría.
+Aplicación full-stack para digitalizar el inventario de la tienda CMPC-libros: autenticación JWT con dos perfiles
+(administrador y usuario), CRUD de libros con imagen de portada, filtrado avanzado, ordenamiento por múltiples
+campos, paginación del lado del servidor, búsqueda con debounce, exportación a CSV, soft delete y registro de
+auditoría. Además incluye ventas con control de stock, administración de catálogos y usuarios, y un dashboard
+con una vista distinta para cada perfil.
 
 ![Inventario de libros](docs/screenshots/02-inventario.png)
 
@@ -190,9 +192,10 @@ npm run dev -w apps/web                            # UI en http://localhost:5173
 
 ### 1. Iniciar sesión
 
-Ingrese con las credenciales de demostración. Si intenta abrir una página protegida sin sesión, la aplicación
-lo lleva al login y, al autenticarse, lo devuelve a la página que había solicitado. La sesión dura una hora;
-cuando expira, cualquier operación lo redirige al login.
+Ingrese con las credenciales de demostración. Tras iniciar sesión, **todos los perfiles llegan primero al
+dashboard**. Si intenta abrir una página protegida sin sesión (o la sesión venció a mitad de trabajo), la
+aplicación lo lleva al login y, al autenticarse, lo devuelve a la página que había solicitado. La sesión dura
+una hora; cuando expira, cualquier operación lo redirige al login.
 
 ![Login](docs/screenshots/01-login.png)
 
@@ -257,6 +260,50 @@ El detalle muestra todos los datos, la portada y las fechas de alta y última ac
 una confirmación en la misma pantalla. Es un **soft delete**: el libro desaparece de la aplicación, pero el
 registro se conserva con `deleted_at` y la operación queda en `audit_logs`.
 
+### 6. Dashboard (`/dashboard`)
+
+![Dashboard del administrador](docs/screenshots/06-dashboard.png)
+
+Es la primera pantalla tras iniciar sesión. Cada perfil ve cifras distintas:
+
+- **Todos los perfiles**: libros activos, disponibles y no disponibles; libros por género (solo los géneros
+  con libros); y ventas pendientes, ventas completadas y monto vendido.
+- **Solo el administrador**: además, el valor del inventario disponible, la cantidad de autores, editoriales,
+  géneros y usuarios (cada contador lleva a su pantalla) y las últimas 10 operaciones de auditoría.
+
+![Dashboard de un usuario](docs/screenshots/07-dashboard-usuario.png)
+
+El recorte lo hace la **API**: a un usuario no le llega la sección de administración, no solo se oculta en la
+pantalla. Las cifras se recalculan cada vez que se abre el dashboard.
+
+### 7. Ventas (`/sales`, administrador y usuario)
+
+![Listado de ventas](docs/screenshots/08-ventas.png)
+
+- **Listado**: paginación en el servidor y filtro por estado; muestra fecha, unidades (la suma de las
+  cantidades), total, estado y quién la creó.
+- **Nueva venta**: busque libros disponibles y agréguelos; la cantidad no puede superar el stock y un mismo libro
+  no se repite en dos líneas. Cada línea guarda el precio del libro en ese momento. Al crearla se vuelve al
+  listado y la venta queda **Pendiente**: todavía no se descuenta stock.
+- **Acciones por fila**: el ojo abre el detalle; en una venta pendiente, el ✅ la completa y la ✖ la cancela.
+  Completar abre un popup para elegir el método de pago y **Aceptar**; recién ahí se descuenta el stock de cada
+  libro, en una sola transacción. Si algún libro no alcanza (o fue eliminado) se avisa y no se descuenta nada.
+  Cancelar pide confirmación y no toca el stock. Una venta completada o cancelada es definitiva.
+
+![Completar una venta](docs/screenshots/09-venta-completar.png)
+
+### 8. Administrar usuarios (solo administrador, `/users`)
+
+![Usuarios](docs/screenshots/10-usuarios.png)
+
+- Tabla con paginación en el servidor (Nombre, Correo electrónico, Perfil, Acciones). **Agregar** abre
+  **Nuevo usuario** (nombre, correo único, perfil y contraseña de al menos 8 caracteres) y el lápiz abre
+  **Editar usuario**; si la contraseña se deja vacía, se conserva la actual.
+- **Eliminar** desactiva la cuenta: ya no puede iniciar sesión y su token deja de servir, pero su historial se
+  conserva. El administrador en sesión no puede eliminarse ni quitarse su propio perfil, y siempre queda al menos
+  un administrador activo.
+- La contraseña se guarda con bcrypt y nunca se devuelve ni se registra en la auditoría.
+
 ## Cumplimiento de requisitos
 
 Correspondencia entre el enunciado de la prueba y la implementación. Las rutas del frontend son relativas a
@@ -278,21 +325,21 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 ### Backend (NestJS + TypeScript)
 
-| Requisito                                | Implementación                                                                                                           |
-| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| Arquitectura modular y escalable (SOLID) | Un módulo por bounded context (`modules/{auth,books,catalog,audit}`), DDD + hexagonal; ver [Arquitectura](#arquitectura) |
-| Autenticación JWT                        | `modules/auth/` (`jwt.strategy.ts`, `jwt-auth.guard.ts` global, `@Public()` para las excepciones)                        |
-| Endpoints RESTful para el CRUD de libros | `modules/books/presentation/books-query.controller.ts`, `books-command.controller.ts`                                    |
-| Exportación de datos en CSV              | `GET /api/books/export` → `export-books-csv.use-case.ts`, `book-csv.serializer.ts` (streaming)                           |
-| Soft delete                              | `Book.softDelete()` en `modules/books/domain/book.ts`; todas las consultas filtran `deleted_at IS NULL`                  |
-| Logging para auditoría de operaciones    | Puerto `AuditLogger` → tabla `audit_logs` en la misma transacción; ver [Logging y auditoría](#logging-y-auditoría)       |
+| Requisito                                | Implementación                                                                                                                                            |
+| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arquitectura modular y escalable (SOLID) | Un módulo por bounded context (`modules/{auth,books,catalog,references,users,sales,dashboard,audit}`), DDD + hexagonal; ver [Arquitectura](#arquitectura) |
+| Autenticación JWT                        | `modules/auth/` (`jwt.strategy.ts`, `jwt-auth.guard.ts` global, `@Public()` para las excepciones)                                                         |
+| Endpoints RESTful para el CRUD de libros | `modules/books/presentation/books-query.controller.ts`, `books-command.controller.ts`                                                                     |
+| Exportación de datos en CSV              | `GET /api/books/export` → `export-books-csv.use-case.ts`, `book-csv.serializer.ts` (streaming)                                                            |
+| Soft delete                              | `Book.softDelete()` en `modules/books/domain/book.ts`; todas las consultas filtran `deleted_at IS NULL`                                                   |
+| Logging para auditoría de operaciones    | Puerto `AuditLogger` → tabla `audit_logs` en la misma transacción; ver [Logging y auditoría](#logging-y-auditoría)                                        |
 
 ### Base de datos (PostgreSQL + Prisma)
 
 | Requisito                                                 | Implementación                                                                                                             |
 | --------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------- |
 | Prisma: esquema declarativo, migraciones y cliente tipado | `apps/api/prisma/schema.prisma`, `apps/api/prisma/migrations/`                                                             |
-| Modelo normalizado con relaciones                         | `books` → `authors`, `publishers`, `genres` (N:1); `audit_logs` → `users`                                                  |
+| Modelo normalizado con relaciones                         | `books` → `authors`, `publishers`, `genres` (N:1); `sale_items` → `sales`, `books`; `sales`, `audit_logs` → `users`        |
 | Índices para consultas frecuentes                         | Compuestos `(deleted_at, <fk>)` y trigram (GIN) para la búsqueda de texto; detalle en [docs/DATABASE.md](docs/DATABASE.md) |
 | Transacciones en operaciones críticas                     | `TransactionManager` con `AsyncLocalStorage` (`shared/infrastructure/prisma/prisma.service.ts`)                            |
 
@@ -300,9 +347,9 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 94 tests                                                   |
-| Tests unitarios de servicios y controladores (NestJS) | Jest: 128 tests (más 15 de integración con PostgreSQL real)                          |
-| Cobertura de al menos 80%                             | API 100% de líneas, web 94,9%; umbrales del 80% configurados en ambas apps           |
+| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 189 tests                                                  |
+| Tests unitarios de servicios y controladores (NestJS) | Jest: 256 tests (más 54 de integración con PostgreSQL real)                          |
+| Cobertura de al menos 80%                             | API 99,2% de líneas, web 95,7%; umbrales del 80% configurados en ambas apps          |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
 | README con instalación, uso y arquitectura            | Este documento                                                                       |
 | Documentación de la API con Swagger/OpenAPI           | http://localhost:3000/api/docs                                                       |
@@ -395,30 +442,34 @@ docs/
 
 ## Decisiones de diseño
 
-| Decisión                                                                                                     | Fundamento                                                                                                                                                       |
-| ------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Puertos como `abstract class`                                                                                | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                         |
-| Agregado `Book` inmutable + value object `Price` (en centavos)                                               | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                      |
-| Transacciones con `AsyncLocalStorage`                                                                        | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                     |
-| Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id        | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                            |
-| El catálogo de filtros solo incluye valores con libros activos                                               | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                               |
-| Soft delete (`deleted_at`)                                                                                   | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                           |
-| Tabla de auditoría escrita dentro de la transacción de negocio                                               | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                           |
-| El JWT se valida contra la base de datos en cada petición                                                    | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria). |
-| Controladores CQS (consulta / comando / imagen)                                                              | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                            |
-| Exportación CSV en streaming con protección contra inyección de fórmulas                                     | Memoria constante; seguro de abrir en Excel.                                                                                                                     |
-| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal | El MIME type lo controla el cliente.                                                                                                                             |
-| Despliegue en el mismo origen (nginx redirige `/api`)                                                        | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                              |
-| JWT en `localStorage`                                                                                        | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                        |
+| Decisión                                                                                                                  | Fundamento                                                                                                                                                                                               |
+| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Puertos como `abstract class`                                                                                             | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                                                                 |
+| Agregado `Book` inmutable + value object `Price` (en centavos)                                                            | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                                                              |
+| Transacciones con `AsyncLocalStorage`                                                                                     | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                                                             |
+| Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id                     | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                                                                    |
+| El catálogo de filtros solo incluye valores con libros activos                                                            | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                                                                       |
+| Soft delete (`deleted_at`)                                                                                                | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                                                                   |
+| Tabla de auditoría escrita dentro de la transacción de negocio                                                            | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                                                                   |
+| El JWT se valida contra la base de datos en cada petición                                                                 | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria).                                         |
+| Controladores CQS (consulta / comando / imagen)                                                                           | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                                                                    |
+| Exportación CSV en streaming con protección contra inyección de fórmulas                                                  | Memoria constante; seguro de abrir en Excel.                                                                                                                                                             |
+| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal              | El MIME type lo controla el cliente.                                                                                                                                                                     |
+| El stock se descuenta al **completar** la venta, con `UPDATE … WHERE stock >= n` por línea dentro de una transacción      | Dos ventas simultáneas nunca dejan stock negativo y, si una línea falla, se revierte todo. El estado de la venta también cambia con una condición (`PENDING`), así que solo una petición puede cerrarla. |
+| Cada línea de venta guarda el precio unitario del momento                                                                 | Cambiar el precio de un libro nunca altera una venta pasada.                                                                                                                                             |
+| El dashboard se recorta en la API según el perfil, y para un usuario ni siquiera se consultan los datos de administración | Ocultar cifras solo en la pantalla no protege nada: la respuesta nunca las contiene.                                                                                                                     |
+| Los usuarios se desactivan, no se borran                                                                                  | La auditoría y las ventas conservan su autoría; el correo sigue ocupado.                                                                                                                                 |
+| Despliegue en el mismo origen (nginx redirige `/api`)                                                                     | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                                                                      |
+| JWT en `localStorage`                                                                                                     | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                                                                |
 
 ## Logging y auditoría
 
 Hay dos niveles, con propósitos distintos:
 
-| Nivel                | Qué registra                                                                                                                  | Dónde se ve                                                                      |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Auditoría de negocio | Quién hizo qué y cuándo: `LOGIN`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE`, `EXPORT`, con la entidad afectada y metadatos | Tabla `audit_logs` (ver [Acceso a la base de datos](#acceso-a-la-base-de-datos)) |
-| Logging técnico      | Cada petición HTTP (método, ruta, código de estado y latencia) y los errores con su contexto                                  | `docker compose logs -f api` (stdout)                                            |
+| Nivel                | Qué registra                                                                                                                                                            | Dónde se ve                                                                      |
+| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Auditoría de negocio | Quién hizo qué y cuándo: `LOGIN`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE`, `EXPORT`, `COMPLETE`, `CANCEL`, con la entidad afectada y metadatos (nunca contraseñas) | Tabla `audit_logs` (ver [Acceso a la base de datos](#acceso-a-la-base-de-datos)) |
+| Logging técnico      | Cada petición HTTP (método, ruta, código de estado y latencia) y los errores con su contexto                                                                            | `docker compose logs -f api` (stdout)                                            |
 
 La auditoría de los cambios se escribe dentro de la misma transacción que la operación: si una falla,
 ninguna de las dos se guarda. Los errores 5xx se registran completos en el log, pero al cliente solo se le
@@ -430,6 +481,8 @@ devuelve un mensaje genérico.
 - Un libro tiene exactamente un autor, una editorial y un género (el enunciado los menciona en singular).
 - Los precios están en CLP con hasta 2 decimales.
 - Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
+- Una venta pendiente **no reserva stock**: dos ventas pueden pedir el último ejemplar y solo la primera en completarse lo consigue; la otra recibe un 409 al completar.
+- Las ventas las ven y operan todos los usuarios autenticados (administrador y usuario), no solo quien las creó.
 - Las imágenes se guardan en un volumen de Docker; un adaptador S3 implementaría el mismo puerto `ImageStorage`.
 - No hay autorregistro: el enunciado pide solo login, y las cuentas las crean los administradores desde la pantalla de usuarios. El primer administrador lo crea el seed.
 
@@ -437,10 +490,10 @@ devuelve un mensaje genérico.
 
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
-| API (Jest)                     | 168   | 100% (ramas 96,9%)                                            |
-| Web (Vitest + Testing Library) | 113   | 94,8% (ramas 93,2%)                                           |
-| Integración (Testcontainers)   | 24    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
-| E2E (Playwright, Chromium)     | 15    | Flujos críticos                                               |
+| API (Jest)                     | 256   | 99,2% (sentencias 98,1%; ramas 86,6%)                         |
+| Web (Vitest + Testing Library) | 189   | 95,7% (ramas 93,7%)                                           |
+| Integración (Testcontainers)   | 54    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
+| E2E (Playwright, Chromium)     | 26    | Flujos críticos de todos los módulos                          |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).
 
@@ -449,8 +502,9 @@ npm test               # unitarios de API y web
 npm run test:cov       # con cobertura; falla si alguna métrica baja del 80%
 ```
 
-Los adaptadores de repositorio de Prisma están excluidos de la cobertura unitaria: son delgados y
-se prueban en la suite de integración, contra un PostgreSQL real.
+De la cobertura unitaria están excluidos los DTOs, los módulos de Nest, `main` y el bootstrap, las utilidades
+de test y los adaptadores de repositorio de Prisma: estos últimos son delgados y se prueban en la suite de
+integración, contra un PostgreSQL real.
 
 ### Tests de integración
 
@@ -461,11 +515,16 @@ un mock no puede garantizar:
 npm run test:int       # requiere Docker en ejecución; no forma parte del pre-push
 ```
 
-| Spec                                 | Qué verifica                                                                                         |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------- |
-| `prisma-catalog.repository.int-spec` | El catálogo de filtros solo ofrece valores con libros activos                                        |
-| `database-indexes.int-spec`          | La migración crea los índices y PostgreSQL los usa (planes medidos sobre 2.000 libros con `ANALYZE`) |
-| `seed.int-spec`                      | El seed carga 23 libros, es idempotente y nunca sobrescribe datos existentes                         |
+| Spec                                   | Qué verifica                                                                                                                                                                       |
+| -------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `prisma-catalog.repository.int-spec`   | El catálogo de filtros solo ofrece valores con libros activos                                                                                                                      |
+| `database-indexes.int-spec`            | La migración crea los índices y PostgreSQL los usa (planes medidos sobre 2.000 libros con `ANALYZE`)                                                                               |
+| `seed.int-spec`                        | El seed carga 23 libros, es idempotente y nunca sobrescribe datos existentes                                                                                                       |
+| `migrations.int-spec`                  | Las migraciones conservan los datos ya escritos (el rol `EDITOR` pasa a `USER`, el stock se calcula desde la disponibilidad), rechazan stock negativo y crean las tablas de ventas |
+| `sales-indexes.int-spec`               | El listado de ventas y el filtro "libros con stock" usan sus índices compuestos (planes con `EXPLAIN`)                                                                             |
+| `prisma-sale-stock.int-spec`           | Dos descuentos simultáneos sobre el último ejemplar: solo uno se aplica; si una línea no tiene stock, se revierte toda la venta                                                    |
+| `prisma-dashboard.repository.int-spec` | Cifras del dashboard: libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` con decimales                                      |
+| `prisma-*.repository.int-spec` (resto) | Autores, editoriales, géneros, usuarios y ventas: orden, paginación, mayúsculas y reglas de borrado                                                                                |
 
 El rate limiting y los headers de seguridad se prueban levantando el `AppModule` real con `supertest`
 (`http-security.spec.ts`), dentro de la suite unitaria.
@@ -480,14 +539,20 @@ npx -w apps/e2e playwright install chromium   # solo la primera vez
 npm run test:e2e                              # informe HTML: npm run e2e:report -w apps/e2e
 ```
 
-| Spec                     | Qué verifica                                                                                              |
-| ------------------------ | --------------------------------------------------------------------------------------------------------- |
-| `auth.setup.ts`          | Login real; tras autenticarse vuelve a la página protegida solicitada                                     |
-| `auth.spec.ts`           | Redirección sin sesión, validación del formulario, credenciales inválidas, logout                         |
-| `book-lifecycle.spec.ts` | Validación reactiva → alta con portada → detalle → soft delete → el género sale del filtro                |
-| `book-edit.spec.ts`      | Editar desde el listado y desde el detalle: guardar mantiene la pantalla, confirma y vuelve al inventario |
-| `book-list.spec.ts`      | Filtros combinados, búsqueda con debounce (1 request), orden multi-campo, paginación                      |
-| `book-export.spec.ts`    | El CSV descargado contiene exactamente las filas filtradas                                                |
+| Spec                                     | Qué verifica                                                                                                                     |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.setup.ts`                          | Login real; tras autenticarse vuelve a la página protegida solicitada                                                            |
+| `auth.spec.ts`                           | Redirección sin sesión, validación del formulario, credenciales inválidas, logout                                                |
+| `book-lifecycle.spec.ts`                 | Validación reactiva → alta con portada → detalle → soft delete → el género sale del filtro                                       |
+| `book-edit.spec.ts`                      | Editar desde el listado y desde el detalle: guardar mantiene la pantalla, confirma y vuelve al inventario                        |
+| `book-list.spec.ts`                      | Filtros combinados, búsqueda con debounce (1 request), orden multi-campo, paginación                                             |
+| `book-export.spec.ts`                    | El CSV descargado contiene exactamente las filas filtradas                                                                       |
+| `admin.spec.ts`                          | Géneros (alta, edición, baja y regla de libros asociados) y perfiles: un usuario ve el dashboard operativo, no la administración |
+| `authors.spec.ts` · `publishers.spec.ts` | Alta con los datos propios (biografía, país), edición y baja desde la interfaz                                                   |
+| `catalog-export.spec.ts`                 | Exportar CSV de autores, editoriales y géneros                                                                                   |
+| `users.spec.ts`                          | Un usuario creado inicia sesión; al eliminarlo, su token deja de servir                                                          |
+| `sales.spec.ts`                          | Crear una venta vuelve al listado; completar descuenta stock; cancelar no; libro eliminado → 409 sin descontar                   |
+| `dashboard.spec.ts`                      | El administrador aterriza en el dashboard y las cifras siguen a los datos reales                                                 |
 
 Decisiones:
 
@@ -496,7 +561,9 @@ Decisiones:
 - **Datos aislados:** cada corrida crea sus libros (vía API) bajo un género único y los elimina al terminar;
   las aserciones siempre se hacen a través de la interfaz.
 - **Un worker:** todos los specs comparten la misma base de datos.
-- Variables opcionales: `E2E_BASE_URL`, `E2E_USER_EMAIL`, `E2E_USER_PASSWORD`.
+- Variables opcionales: `E2E_BASE_URL`, `E2E_USER_EMAIL` y `E2E_USER_PASSWORD` (administrador), `E2E_REGULAR_EMAIL` y `E2E_REGULAR_PASSWORD` (usuario).
+- **Si cambia la contraseña de un usuario de demostración desde la pantalla de usuarios**, el e2e de ese perfil falla al iniciar sesión: vuelva a dejarla como estaba o pase la nueva con esas variables.
+- Las listas del admin paginan en el servidor y los datos de corridas anteriores se acumulan, por lo que los specs de catálogos recorren las páginas hasta encontrar la fila (`support/paged-table.ts`).
 
 ## Calidad de código
 
@@ -512,8 +579,8 @@ La guía para extender la aplicación respetando estas reglas está en [docs/BUI
 
 ## Mejoras fuera del alcance
 
-- Tests de integración del resto de los repositorios Prisma (libros, usuarios, auditoría) y ejecución del E2E en un stack aislado y efímero.
-- Refresh tokens en cookies httpOnly; autorización por roles (guard `@Roles('ADMIN')`) para eliminar.
+- Tests de integración de los repositorios Prisma de libros y de auditoría, y ejecución del E2E en un stack aislado y efímero (hoy comparte la base y los puertos del stack local).
+- Refresh tokens en cookies httpOnly. Reserva de stock al crear una venta pendiente (hoy solo se descuenta al completar).
 - Reactivación de libros eliminados (el soft delete ya conserva los datos necesarios).
 - Adaptador `ImageStorage` compatible con S3 + redimensionamiento de imágenes.
 - Paginación por keyset para exportaciones de catálogos muy grandes; particionado de la tabla de auditoría.
