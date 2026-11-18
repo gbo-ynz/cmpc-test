@@ -36,6 +36,31 @@ it('loads stock for every book, some of them out of stock', async () => {
   expect(books.every((book) => book.stock >= 0)).toBe(true);
 });
 
+it('loads birth date and biography for every demo author (birth date only when known)', async () => {
+  const authors = await db.prisma.author.findMany({ select: { birthDate: true, biography: true } });
+  const mistral = await db.prisma.author.findUnique({ where: { name: 'Gabriela Mistral' } });
+
+  expect(authors.every((author) => author.biography !== null)).toBe(true);
+  expect(authors.filter((author) => author.birthDate === null)).toHaveLength(2);
+  expect(mistral?.birthDate?.toISOString().slice(0, 10)).toBe('1889-04-07');
+});
+
+it('loads the country of every demo publisher', async () => {
+  const publishers = await db.prisma.publisher.findMany({ select: { country: true } });
+  const sur = await db.prisma.publisher.findUnique({ where: { name: 'Sudamericana' } });
+
+  expect(publishers.every((publisher) => publisher.country !== null)).toBe(true);
+  expect(sur?.country).toBe('Argentina');
+});
+
+it('loads the description of every demo genre', async () => {
+  const genres = await db.prisma.genre.findMany({ select: { description: true } });
+  const poetry = await db.prisma.genre.findUnique({ where: { name: 'Poesía' } });
+
+  expect(genres.every((genre) => genre.description !== null)).toBe(true);
+  expect(poetry?.description).toContain('verso');
+});
+
 it('is idempotent: running it again changes nothing', async () => {
   const before = await db.prisma.book.findMany({ orderBy: { id: 'asc' } });
 

@@ -232,7 +232,17 @@ cuando expira, cualquier operación lo redirige al login.
 ### 4. Administrar autores, editoriales y géneros (solo administrador)
 
 El menú de un administrador incluye **Autores**, **Editoriales** y **Géneros**. Cada pantalla lista los
-registros con su cantidad de libros activos y permite agregar, renombrar (en la misma fila) y eliminar.
+registros con su cantidad de libros activos y permite agregar, editar y eliminar. Las tres usan la misma
+estructura: tabla con paginación en el servidor, botones **Exportar CSV** y **Agregar**, y una pantalla propia para crear y editar.
+**Exportar CSV** descarga _todos_ los registros del catálogo (no solo la página visible), ordenados por nombre.
+
+- **Autores** tienen además fecha de nacimiento y una biografía breve (ambas opcionales). El lápiz abre
+  **Editar autor**; al guardar se queda en la página con un mensaje, y **← Volver a autores** regresa al listado.
+- **Editoriales** tienen además un país (opcional) y funcionan igual que autores: tabla con paginación en el
+  servidor (Nombre, País, Libros activos, Acciones), **Agregar** abre **Nueva editorial** y el lápiz abre
+  **Editar editorial** con los datos cargados.
+- **Géneros** tienen además una descripción (opcional, hasta 500 caracteres) y funcionan igual: **Agregar** abre
+  **Nuevo género** y el lápiz abre **Editar género** con los datos cargados.
 
 - Los nombres no se repiten, sin distinguir mayúsculas ("Novela" y "novela" son el mismo).
 - Un registro con libros asociados (incluso eliminados) no se puede eliminar.
@@ -312,21 +322,23 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 Todas las respuestas usan el mismo formato: `{ success: true, data, meta? }` o
 `{ success: false, data: null, error: { code, message, details? } }`.
 
-| Método                | Endpoint                                                                                                    | Descripción                                                 |
-| --------------------- | ----------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------- |
-| POST                  | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)                   |
-| GET                   | `/api/auth/me`                                                                                              | Usuario actual                                              |
-| GET                   | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                            |
-| GET                   | `/api/books/:id`                                                                                            | Detalle                                                     |
-| POST                  | `/api/books`                                                                                                | Crear                                                       |
-| PATCH                 | `/api/books/:id`                                                                                            | Actualización parcial                                       |
-| DELETE                | `/api/books/:id`                                                                                            | Soft delete (204)                                           |
-| POST                  | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`)         |
-| GET                   | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                            |
-| GET                   | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos (filtros) |
-| GET                   | `/api/authors` · `/api/publishers` · `/api/genres`                                                          | Todos los registros, con sus libros activos                 |
-| POST · PATCH · DELETE | `/api/authors[/:id]` (ídem `publishers`, `genres`)                                                          | Crear, renombrar, eliminar (solo administrador)             |
-| GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)               |
+| Método                | Endpoint                                                                                                    | Descripción                                                   |
+| --------------------- | ----------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------- |
+| POST                  | `/api/auth/login`                                                                                           | Credenciales → JWT (límite: 5 por minuto)                     |
+| GET                   | `/api/auth/me`                                                                                              | Usuario actual                                                |
+| GET                   | `/api/books?search=&genreId=&publisherId=&authorId=&isAvailable=&sort=title:asc,price:desc&page=1&limit=10` | Listado paginado                                              |
+| GET                   | `/api/books/:id`                                                                                            | Detalle                                                       |
+| POST                  | `/api/books`                                                                                                | Crear                                                         |
+| PATCH                 | `/api/books/:id`                                                                                            | Actualización parcial                                         |
+| DELETE                | `/api/books/:id`                                                                                            | Soft delete (204)                                             |
+| POST                  | `/api/books/:id/image`                                                                                      | Subir portada (`multipart/form-data`, campo `file`)           |
+| GET                   | `/api/books/export?<mismos filtros y orden>`                                                                | CSV en streaming                                              |
+| GET                   | `/api/catalog`                                                                                              | Autores, editoriales y géneros con libros activos (filtros)   |
+| GET                   | `/api/authors` · `/api/publishers` · `/api/genres`                                                          | Todos los registros, con sus libros activos                   |
+| GET                   | `/api/authors/export` · `/api/publishers/export` · `/api/genres/export`                                     | CSV con todos los registros del catálogo (solo administrador) |
+| GET                   | `/api/authors/:id`                                                                                          | Un autor con fecha de nacimiento y biografía                  |
+| POST · PATCH · DELETE | `/api/authors[/:id]` (ídem `publishers`, `genres`)                                                          | Crear, editar, eliminar (solo administrador)                  |
+| GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)                 |
 
 Contrato completo con esquemas y ejemplos: Swagger en http://localhost:3000/api/docs.
 
@@ -421,9 +433,9 @@ devuelve un mensaje genérico.
 
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
-| API (Jest)                     | 146   | 100% (ramas 96,3%)                                            |
-| Web (Vitest + Testing Library) | 106   | 93,8% (ramas 94,9%)                                           |
-| Integración (Testcontainers)   | 20    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
+| API (Jest)                     | 168   | 100% (ramas 96,9%)                                            |
+| Web (Vitest + Testing Library) | 113   | 94,8% (ramas 93,2%)                                           |
+| Integración (Testcontainers)   | 24    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
 | E2E (Playwright, Chromium)     | 15    | Flujos críticos                                               |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).

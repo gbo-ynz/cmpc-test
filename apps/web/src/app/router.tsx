@@ -3,21 +3,11 @@ import { LoginPage } from '../features/auth/ui/LoginPage';
 import { RequireAuth } from '../features/auth/ui/RequireAuth';
 import { RequireRole } from '../features/auth/ui/RequireRole';
 import { BooksListPage } from '../features/books/ui/pages/BooksListPage';
-import { ReferencesPage } from '../features/references/ui/ReferencesPage';
 import { NotFoundPage } from '../shared/ui/NotFoundPage';
 import { RouteError } from '../shared/ui/RouteError';
+import { adminRoutes } from './admin-routes';
 import { AuthenticatedLayout } from './AuthenticatedLayout';
-
-// Secondary pages are code-split: the list (landing page) ships in the main chunk.
-const lazyPage = (load: () => Promise<{ default: React.ComponentType }>) => async () => ({
-  Component: (await load()).default,
-});
-
-const adminRoutes: RouteObject[] = [
-  { path: 'authors', element: <ReferencesPage kind="authors" /> },
-  { path: 'publishers', element: <ReferencesPage kind="publishers" /> },
-  { path: 'genres', element: <ReferencesPage kind="genres" /> },
-];
+import { lazyPage } from './lazy-page';
 
 export const routes: RouteObject[] = [
   { path: '/login', element: <LoginPage /> },

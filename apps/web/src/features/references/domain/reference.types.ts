@@ -7,39 +7,24 @@ export interface Reference {
   readonly activeBooks: number;
 }
 
-interface ReferenceCopy {
-  readonly title: string;
-  readonly newLabel: string;
-  readonly nameTaken: string;
-  readonly maxLength: number;
-}
+// Spanish grammatical gender differs per kind ("un autor", "una editorial").
+export const REFERENCE_COPY: Record<ReferenceKind, { readonly nameTaken: string }> = {
+  authors: { nameTaken: 'Ya existe un autor con ese nombre.' },
+  publishers: { nameTaken: 'Ya existe una editorial con ese nombre.' },
+  genres: { nameTaken: 'Ya existe un género con ese nombre.' },
+};
 
-// Spanish grammatical gender differs per kind ("nuevo autor", "nueva editorial").
-export const REFERENCE_COPY: Record<ReferenceKind, ReferenceCopy> = {
-  authors: {
-    title: 'Autores',
-    newLabel: 'Nuevo autor',
-    nameTaken: 'Ya existe un autor con ese nombre.',
-    maxLength: 160,
-  },
-  publishers: {
-    title: 'Editoriales',
-    newLabel: 'Nueva editorial',
-    nameTaken: 'Ya existe una editorial con ese nombre.',
-    maxLength: 160,
-  },
-  genres: {
-    title: 'Géneros',
-    newLabel: 'Nuevo género',
-    nameTaken: 'Ya existe un género con ese nombre.',
-    maxLength: 80,
-  },
+/** Prefix of the downloaded file: libros-2026-11-18.csv style, per catalog. */
+export const EXPORT_FILE_PREFIX: Record<ReferenceKind, string> = {
+  authors: 'autores',
+  publishers: 'editoriales',
+  genres: 'generos',
 };
 
 /** Port: the UI depends on this contract, not on axios. */
 export interface ReferencesGateway {
   list(kind: ReferenceKind): Promise<Reference[]>;
-  create(kind: ReferenceKind, name: string): Promise<Reference>;
-  rename(kind: ReferenceKind, id: string, name: string): Promise<Reference>;
   remove(kind: ReferenceKind, id: string): Promise<void>;
+  /** Every record of the catalog (not only the visible page) as a CSV file. */
+  exportCsv(kind: ReferenceKind): Promise<Blob>;
 }

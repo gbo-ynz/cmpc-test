@@ -1,7 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { toApiError } from '../../../shared/api/api-error';
+import { datedFileName, downloadBlob } from '../../../shared/lib/download';
 import { bookKeys } from '../../books/application/book-keys';
-import type { ReferenceKind } from '../domain/reference.types';
+import { EXPORT_FILE_PREFIX, type ReferenceKind } from '../domain/reference.types';
 import { referencesApi } from '../infrastructure/references.api';
 
 export const referenceKeys = {
@@ -13,7 +14,7 @@ export const useReferences = (kind: ReferenceKind) =>
   useQuery({ queryKey: referenceKeys.list(kind), queryFn: () => referencesApi.list(kind) });
 
 /** Any change can rename what books display or what the filters offer: refresh all of it. */
-function useReferenceMutation<V>(
+export function useReferenceMutation<V>(
   kind: ReferenceKind,
   mutationFn: (variables: V) => Promise<unknown>,
 ) {
@@ -29,16 +30,17 @@ function useReferenceMutation<V>(
   });
 }
 
-export const useCreateReference = (kind: ReferenceKind) =>
-  useReferenceMutation(kind, (name: string) => referencesApi.create(kind, name));
-
-export const useRenameReference = (kind: ReferenceKind) =>
-  useReferenceMutation(kind, ({ id, name }: { id: string; name: string }) =>
-    referencesApi.rename(kind, id, name),
-  );
-
 export const useDeleteReference = (kind: ReferenceKind) =>
   useReferenceMutation(kind, (id: string) => referencesApi.remove(kind, id));
+
+/** Downloads the whole catalog, regardless of the page being shown. */
+export const useExportReferences = (kind: ReferenceKind) =>
+  useMutation({
+    mutationFn: async () => {
+      const blob = await referencesApi.exportCsv(kind);
+      downloadBlob(blob, datedFileName(EXPORT_FILE_PREFIX[kind], 'csv'));
+    },
+  });
 
 /** A 409 means something different per action; anything else uses the generic copy. */
 export function referenceErrorText(error: unknown, onConflict: string): string {

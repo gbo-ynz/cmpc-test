@@ -312,23 +312,10 @@ img {
 }
 .table .table__actions {
   text-align: right;
+  white-space: nowrap;
 }
 
 /* Catalog screens (authors, publishers, genres) */
-.reference-form {
-  display: flex;
-  align-items: flex-end;
-  flex-wrap: wrap;
-  gap: 12px;
-  padding: 16px 20px;
-}
-.reference-form .field {
-  flex: 1;
-  min-width: 220px;
-}
-.reference-form > [role='alert'] {
-  flex-basis: 100%;
-}
 .reference-name {
   display: inline-flex;
   align-items: center;
@@ -360,6 +347,76 @@ img {
 .count-pill--empty {
   background: #eef1ef;
   color: var(--color-muted);
+}
+
+/* Authors: create/edit panel and table details */
+.panel {
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.panel__title {
+  margin: 0 0 12px;
+  font-size: 1.05rem;
+}
+.catalog-form {
+  display: grid;
+  gap: 12px;
+}
+.catalog-form__row {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  /* Without this the name field stretches to the height of the date field + its hint. */
+  align-items: start;
+  gap: 12px;
+}
+.catalog-form__row .field__control {
+  height: 46px;
+}
+@media (max-width: 640px) {
+  .catalog-form__row {
+    grid-template-columns: 1fr;
+  }
+}
+.field__control--textarea {
+  min-height: 84px;
+  resize: vertical;
+  font: inherit;
+  line-height: 1.45;
+}
+.catalog-text {
+  display: -webkit-box;
+  margin: 0;
+  overflow: hidden;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  color: var(--color-muted);
+  line-height: 1.45;
+}
+/* Roomier table for the authors screen: full page width, larger type and row height. */
+.catalog-table {
+  font-size: 1rem;
+}
+.catalog-table th,
+.catalog-table td {
+  padding: 18px 24px;
+}
+.catalog-table th {
+  font-size: 0.95rem;
+  font-weight: 700;
+  border-bottom-width: 2px;
+}
+.catalog-table .reference-name {
+  font-weight: 500;
+}
+.catalog-table .icon-button {
+  width: 40px;
+  height: 40px;
+}
+.table .table__nowrap {
+  white-space: nowrap;
+}
+a.icon-button {
+  text-decoration: none;
 }
 
 /* Icon-only actions: always paired with an aria-label and a tooltip (IconButton). */
@@ -492,6 +549,18 @@ img {
   align-items: center;
   gap: 8px;
   flex-wrap: wrap;
+}
+/* Inside a table row the confirmation must not stretch the table: buttons stay on one line,
+   right-aligned, and the error wraps below them within a bounded width. */
+.table__actions .confirm {
+  justify-content: flex-end;
+}
+.table__actions .confirm .field__error {
+  flex-basis: 100%;
+  max-width: 260px;
+  margin-left: auto;
+  text-align: right;
+  white-space: normal;
 }
 .export {
   display: grid;

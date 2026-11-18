@@ -3,23 +3,30 @@ import { LoginPage } from '../support/pages/login.page';
 import { REGULAR_USER } from '../support/session';
 
 // The stored session (auth.setup.ts) is an administrator.
-test('an administrator creates, renames and deletes a genre', async ({ page }) => {
+test('an administrator creates, edits and deletes a genre', async ({ page }) => {
   const name = `Género admin ${Date.now()}`;
-  const cell = (text: string) => page.getByRole('cell', { name: text, exact: true });
+  const row = () => page.getByRole('row', { name: new RegExp(name) });
   await page.goto('/genres');
 
-  await page.getByLabel('Nuevo género').fill(name);
+  await page.getByRole('link', { name: 'Agregar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Nuevo género' })).toBeVisible();
+  await page.getByLabel('Nombre').fill(name);
+  await page.getByLabel('Descripción').fill('Obras de prueba.');
   await page.getByRole('button', { name: 'Agregar', exact: true }).click();
-  await expect(cell(name)).toBeVisible();
+  await expect(row()).toContainText('Obras de prueba.');
 
-  await page.getByRole('button', { name: `Renombrar ${name}`, exact: true }).click();
-  await page.getByLabel(`Nuevo nombre de ${name}`).fill(`${name} bis`);
-  await page.getByRole('button', { name: 'Guardar', exact: true }).click();
-  await expect(cell(`${name} bis`)).toBeVisible();
+  await page.getByRole('link', { name: `Editar ${name}`, exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Editar género' })).toBeVisible();
+  await expect(page.getByLabel('Descripción')).toHaveValue('Obras de prueba.');
+  await page.getByLabel('Descripción').fill('Obras de prueba editadas.');
+  await page.getByRole('button', { name: 'Guardar cambios' }).click();
+  await expect(page.getByText('Los cambios se guardaron correctamente.')).toBeVisible();
 
-  await page.getByRole('button', { name: `Eliminar ${name} bis`, exact: true }).click();
+  await page.getByRole('link', { name: '← Volver a géneros' }).click();
+  await expect(row()).toContainText('Obras de prueba editadas.');
+  await page.getByRole('button', { name: `Eliminar ${name}`, exact: true }).click();
   await page.getByRole('button', { name: 'Sí, eliminar' }).click();
-  await expect(cell(`${name} bis`)).toHaveCount(0);
+  await expect(row()).toHaveCount(0);
 });
 
 test('a genre that still has books cannot be deleted', async ({ page }) => {
@@ -28,7 +35,9 @@ test('a genre that still has books cannot be deleted', async ({ page }) => {
   await page.getByRole('button', { name: 'Eliminar Novela', exact: true }).click();
   await page.getByRole('button', { name: 'Sí, eliminar' }).click();
 
-  await expect(page.getByRole('alert')).toHaveText('No se puede eliminar: tiene libros asociados.');
+  await expect(page.getByRole('alert')).toContainText(
+    'No se puede eliminar: tiene libros asociados',
+  );
 });
 
 test.describe('regular user', () => {

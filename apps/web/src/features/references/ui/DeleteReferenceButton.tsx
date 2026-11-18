@@ -5,7 +5,8 @@ import { TrashIcon } from '../../../shared/ui/icons';
 import { referenceErrorText, useDeleteReference } from '../application/reference-hooks';
 import type { Reference, ReferenceKind } from '../domain/reference.types';
 
-const IN_USE = 'No se puede eliminar: tiene libros asociados.';
+const IN_USE =
+  'No se puede eliminar: tiene libros asociados, aunque estén eliminados (se conservan por el historial).';
 
 /** Two-step inline confirmation, like deleting a book. */
 export function DeleteReferenceButton({

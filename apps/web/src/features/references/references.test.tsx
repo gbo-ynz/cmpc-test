@@ -1,85 +1,80 @@
-import { screen, waitFor, within } from '@testing-library/react';
+import { screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ApiError } from '../../shared/api/api-error';
 import { renderWithProviders } from '../../test/render';
 import { RequireRole } from '../auth/ui/RequireRole';
+import { downloadBlob } from '../../shared/lib/download';
 import { referencesApi } from './infrastructure/references.api';
-import { ReferencesPage } from './ui/ReferencesPage';
+import { DeleteReferenceButton } from './ui/DeleteReferenceButton';
+import { ExportReferencesButton } from './ui/ExportReferencesButton';
 
 vi.mock('./infrastructure/references.api', () => ({
-  referencesApi: { list: vi.fn(), create: vi.fn(), rename: vi.fn(), remove: vi.fn() },
+  referencesApi: { list: vi.fn(), remove: vi.fn(), exportCsv: vi.fn() },
+}));
+vi.mock('../../shared/lib/download', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('../../shared/lib/download')>()),
+  downloadBlob: vi.fn(),
 }));
 
 const api = vi.mocked(referencesApi);
-const BORGES = { id: 'a1', name: 'Jorge Luis Borges', activeBooks: 2 };
-const SABATO = { id: 'a2', name: 'Ernesto Sabato', activeBooks: 0 };
+const SUR = { id: 'p1', name: 'Sur', activeBooks: 0 };
 
-beforeEach(() => api.list.mockResolvedValue([SABATO, BORGES]));
+describe('DeleteReferenceButton', () => {
+  it('asks for confirmation before deleting', async () => {
+    api.remove.mockResolvedValue();
+    renderWithProviders(<DeleteReferenceButton kind="publishers" reference={SUR} />);
 
-const row = (name: string) => screen.getByRole('row', { name: new RegExp(name) });
-
-describe('ReferencesPage', () => {
-  it('lists the records of its kind with their active books', async () => {
-    renderWithProviders(<ReferencesPage kind="authors" />);
-
-    expect(screen.getByRole('heading', { name: 'Autores' })).toBeInTheDocument();
-    expect(await screen.findByText('Jorge Luis Borges')).toBeInTheDocument();
-    expect(within(row('Borges')).getByText('2')).toBeInTheDocument();
-    expect(api.list).toHaveBeenCalledWith('authors');
-  });
-
-  it('adds a record, with the button disabled while the name is empty', async () => {
-    api.create.mockResolvedValue({ ...SABATO, id: 'a3', name: 'Isabel Allende' });
-    renderWithProviders(<ReferencesPage kind="publishers" />);
-    const add = screen.getByRole('button', { name: 'Agregar' });
-
-    expect(add).toBeDisabled();
-    await userEvent.type(screen.getByLabelText('Nueva editorial'), '  Isabel Allende ');
-    await userEvent.click(add);
-
-    expect(api.create).toHaveBeenCalledWith('publishers', 'Isabel Allende');
-  });
-
-  it('explains a repeated name', async () => {
-    api.create.mockRejectedValue(new ApiError('exists', 409, 'CONFLICT'));
-    renderWithProviders(<ReferencesPage kind="genres" />);
-
-    await userEvent.type(screen.getByLabelText('Nuevo género'), 'Novela');
-    await userEvent.click(screen.getByRole('button', { name: 'Agregar' }));
-
-    expect(await screen.findByRole('alert')).toHaveTextContent(
-      'Ya existe un género con ese nombre.',
-    );
-  });
-
-  it('renames a record in place', async () => {
-    api.rename.mockResolvedValue({ ...BORGES, name: 'J. L. Borges' });
-    renderWithProviders(<ReferencesPage kind="authors" />);
-
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Renombrar Jorge Luis Borges' }),
-    );
-    const input = screen.getByLabelText('Nuevo nombre de Jorge Luis Borges');
-    await userEvent.clear(input);
-    await userEvent.type(input, 'J. L. Borges');
-    await userEvent.click(screen.getByRole('button', { name: 'Guardar' }));
-
-    expect(api.rename).toHaveBeenCalledWith('authors', 'a1', 'J. L. Borges');
-  });
-
-  it('asks for confirmation before deleting and explains why a record with books cannot go', async () => {
-    api.remove.mockRejectedValue(new ApiError('in use', 409, 'CONFLICT'));
-    renderWithProviders(<ReferencesPage kind="authors" />);
-
-    await userEvent.click(
-      await screen.findByRole('button', { name: 'Eliminar Jorge Luis Borges' }),
-    );
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar Sur' }));
+    expect(api.remove).not.toHaveBeenCalled();
     await userEvent.click(screen.getByRole('button', { name: 'Sí, eliminar' }));
 
-    await waitFor(() => expect(api.remove).toHaveBeenCalledWith('authors', 'a1'));
+    await waitFor(() => expect(api.remove).toHaveBeenCalledWith('publishers', 'p1'));
+  });
+
+  it('lets the admin cancel and explains why a record with books cannot go', async () => {
+    api.remove.mockRejectedValue(new ApiError('in use', 409, 'CONFLICT'));
+    renderWithProviders(<DeleteReferenceButton kind="genres" reference={SUR} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar Sur' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Cancelar' }));
+    expect(screen.getByRole('button', { name: 'Eliminar Sur' })).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole('button', { name: 'Eliminar Sur' }));
+    await userEvent.click(screen.getByRole('button', { name: 'Sí, eliminar' }));
+
     expect(await screen.findByRole('alert')).toHaveTextContent(
-      'No se puede eliminar: tiene libros asociados.',
+      'No se puede eliminar: tiene libros asociados, aunque estén eliminados (se conservan por el historial).',
     );
+  });
+});
+
+describe('ExportReferencesButton', () => {
+  it.each([
+    ['authors', 'autores'],
+    ['publishers', 'editoriales'],
+    ['genres', 'generos'],
+  ] as const)('downloads the whole %s catalog as a dated CSV', async (kind, prefix) => {
+    const blob = new Blob(['csv']);
+    api.exportCsv.mockResolvedValue(blob);
+    renderWithProviders(<ExportReferencesButton kind={kind} />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+
+    await waitFor(() => expect(api.exportCsv).toHaveBeenCalledWith(kind));
+    expect(downloadBlob).toHaveBeenCalledWith(
+      blob,
+      expect.stringMatching(new RegExp(`^${prefix}-\\d{4}-\\d{2}-\\d{2}\\.csv$`)),
+    );
+  });
+
+  it('explains when the export fails', async () => {
+    api.exportCsv.mockRejectedValue(new ApiError('forbidden', 403, 'FORBIDDEN'));
+    renderWithProviders(<ExportReferencesButton kind="authors" />);
+
+    await userEvent.click(screen.getByRole('button', { name: 'Exportar CSV' }));
+
+    expect(await screen.findByRole('alert')).toBeInTheDocument();
+    expect(downloadBlob).not.toHaveBeenCalled();
   });
 });
 

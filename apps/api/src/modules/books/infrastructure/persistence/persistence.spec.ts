@@ -15,9 +15,9 @@ const RECORD: BookRecord = {
   createdAt: new Date('2026-01-01T00:00:00.000Z'),
   updatedAt: new Date('2026-01-02T00:00:00.000Z'),
   deletedAt: null,
-  author: { id: 'a1', name: 'Julio Cortázar' },
-  publisher: { id: 'p1', name: 'Sudamericana' },
-  genre: { id: 'g1', name: 'Novela' },
+  author: { id: 'a1', name: 'Julio Cortázar', birthDate: null, biography: null },
+  publisher: { id: 'p1', name: 'Sudamericana', country: null },
+  genre: { id: 'g1', name: 'Novela', description: null },
 };
 
 describe('book mapper', () => {

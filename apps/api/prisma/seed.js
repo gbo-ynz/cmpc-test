@@ -21,6 +21,9 @@ const DEMO_USERS = [
 ];
 
 const BOOKS = require('./seed-data/books');
+const AUTHORS = require('./seed-data/authors');
+const PUBLISHERS = require('./seed-data/publishers');
+const GENRES = require('./seed-data/genres');
 
 const connect = (name) => ({ connectOrCreate: { where: { name }, create: { name } } });
 
@@ -48,6 +51,33 @@ async function seedBooks() {
         genre: connect(genre),
       },
     });
+  }
+  await seedAuthorDetails();
+  await seedPublisherCountries();
+  await seedGenreDescriptions();
+}
+
+// Only runs with the books (new databases): it never overwrites details edited by an admin.
+async function seedAuthorDetails() {
+  for (const [name, birthDate, biography] of AUTHORS) {
+    await prisma.author.updateMany({
+      where: { name },
+      data: { birthDate: birthDate ? new Date(`${birthDate}T00:00:00Z`) : null, biography },
+    });
+  }
+}
+
+// Same rule as the author details: only on new databases, never over an admin's edits.
+async function seedPublisherCountries() {
+  for (const [name, country] of PUBLISHERS) {
+    await prisma.publisher.updateMany({ where: { name }, data: { country } });
+  }
+}
+
+// Same rule as the other details: only on new databases, never over an admin's edits.
+async function seedGenreDescriptions() {
+  for (const [name, description] of GENRES) {
+    await prisma.genre.updateMany({ where: { name }, data: { description } });
   }
 }
 

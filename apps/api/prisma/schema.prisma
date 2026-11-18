@@ -62,27 +62,34 @@ model User {
 }
 
 model Author {
-  id    String @id @default(uuid()) @db.Uuid
-  name  String @unique @db.VarChar(160)
-  books Book[]
+  id        String    @id @default(uuid()) @db.Uuid
+  name      String    @unique @db.VarChar(160)
+  // Calendar date (no time zone): optional because it is not always known.
+  birthDate DateTime? @map("birth_date") @db.Date
+  biography String?   @db.VarChar(1000)
+  books     Book[]
 
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "authors_name_trgm_idx")
   @@map("authors")
 }
 
 model Publisher {
-  id    String @id @default(uuid()) @db.Uuid
-  name  String @unique @db.VarChar(160)
-  books Book[]
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String  @unique @db.VarChar(160)
+  // Optional: not every publisher has a known country.
+  country String? @db.VarChar(80)
+  books   Book[]
 
   @@index([name(ops: raw("gin_trgm_ops"))], type: Gin, map: "publishers_name_trgm_idx")
   @@map("publishers")
 }
 
 model Genre {
-  id    String @id @default(uuid()) @db.Uuid
-  name  String @unique @db.VarChar(80)
-  books Book[]
+  id          String  @id @default(uuid()) @db.Uuid
+  name        String  @unique @db.VarChar(80)
+  // Optional free text: not every genre needs a description.
+  description String? @db.VarChar(500)
+  books       Book[]
 
   @@map("genres")
 }

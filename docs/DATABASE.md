@@ -46,14 +46,18 @@ erDiagram
   authors {
     uuid id PK
     varchar name UK
+    date birth_date "opcional"
+    varchar biography "opcional, 1000"
   }
   publishers {
     uuid id PK
     varchar name UK
+    varchar country "opcional, 80"
   }
   genres {
     uuid id PK
     varchar name UK
+    varchar description "opcional, 500"
   }
   books {
     uuid id PK
@@ -151,6 +155,9 @@ Nunca renombrar ni eliminar una columna en la misma versión que deja de usarla.
 | `20261117000000_init`                       | Modelo inicial, `pg_trgm` e índices                                                                                                                              | `database-indexes.int-spec.ts`                                                                                                     |
 | `20261118000000_roles_stock_sales_expand`   | **Expandir**: `EDITOR` → `USER`, `users.deleted_at`, `books.stock` (calculado desde `is_available`), tablas `sales` y `sale_items`, acciones `COMPLETE`/`CANCEL` | `migrations.int-spec.ts` (datos escritos con el esquema inicial sobreviven) + `prisma migrate diff`: sin diferencias con el schema |
 | `20261118010000_drop_is_available_contract` | **Contraer**: elimina `books.is_available` y su índice; la disponibilidad pasa a ser `stock > 0`                                                                 | `migrations.int-spec.ts` › "drops is_available once stock replaces it" + `prisma migrate diff` sin diferencias                     |
+| `20261118020000_author_details`             | Agrega `authors.birth_date` (`DATE`) y `authors.biography` (`VARCHAR(1000)`), ambas opcionales: aditiva, las filas existentes siguen válidas sin relleno         | `prisma-author.repository.int-spec.ts` (la fecha vuelve igual, sin corrimiento horario) + `migrations.int-spec.ts`                 |
+| `20261118120000_publisher_country`          | Agrega `publishers.country` (`VARCHAR(80)`), opcional: aditiva, las filas existentes siguen válidas sin relleno                                                  | `prisma-publisher.repository.int-spec.ts` + `migrations.int-spec.ts`                                                               |
+| `20261118130000_genre_description`          | Agrega `genres.description` (`VARCHAR(500)`), opcional: aditiva, las filas existentes siguen válidas sin relleno                                                 | `prisma-genre.repository.int-spec.ts` + `migrations.int-spec.ts`                                                                   |
 
 La segunda migración se escribió a mano porque Prisma traduce el renombre de un valor de enum como "borrar y
 recrear", lo que perdería los usuarios con ese rol; `ALTER TYPE … RENAME VALUE` conserva cada fila. Después

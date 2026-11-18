@@ -28,6 +28,8 @@ Table users {
 Table authors {
   id uuid [pk]
   name varchar(160) [unique, not null]
+  birth_date date [note: 'opcional']
+  biography varchar(1000) [note: 'opcional']
   indexes {
     name [type: gin, name: 'authors_name_trgm_idx', note: 'gin_trgm_ops']
   }
@@ -36,6 +38,7 @@ Table authors {
 Table publishers {
   id uuid [pk]
   name varchar(160) [unique, not null]
+  country varchar(80) [note: 'opcional']
   indexes {
     name [type: gin, name: 'publishers_name_trgm_idx', note: 'gin_trgm_ops']
   }
@@ -44,6 +47,7 @@ Table publishers {
 Table genres {
   id uuid [pk]
   name varchar(80) [unique, not null]
+  description varchar(500) [note: 'opcional']
 }
 
 Table books {

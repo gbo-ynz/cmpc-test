@@ -277,7 +277,7 @@ planificador es arbitraria y el test no probaría nada. Justificación de cada �
 
 ## Ampliación: administración y perfiles
 
-Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock); ventas, usuarios y dashboard 🛠 (fases 3 a 5).
+Requisitos agregados después del enunciado (no forman parte de la prueba original). Avance: fases 1 y 2 ✅ (perfiles, catálogos y stock), detalles del autor ✅ (RF-18) país de la editorial ✅ (RF-19) descripción del género ✅ (RF-20) y exportación de catálogos ✅ (RF-21); ventas, usuarios y dashboard 🛠 (fases 3 a 5).
 
 ### Perfiles y permisos
 
@@ -315,7 +315,7 @@ Requisitos agregados después del enunciado (no forman parte de la prueba origin
 
 ### RF-11 a RF-13 · Administración de autores, editoriales y géneros ✅
 
-Verificado por: API `references.spec.ts` (8 casos de uso) y `references.http.spec.ts` (permisos, 201/400/404/409 por HTTP real); INT `prisma-reference.repository.int-spec.ts` (orden, conteo, mayúsculas, libros eliminados); WEB `references.test.tsx`; E2E `admin.spec.ts` › "an administrator creates, renames and deletes a genre", "a genre that still has books cannot be deleted".
+Verificado por: API `references.spec.ts` (eliminación), `authors.spec.ts`, `publishers.spec.ts`, `genres.spec.ts` y `references.http.spec.ts` (permisos, 201/400/404/409 por HTTP real); INT `prisma-reference.repository.int-spec.ts` (orden, conteo, mayúsculas, libros eliminados); WEB `references.test.tsx` (confirmación al eliminar), `authors.test.tsx`, `publishers.test.tsx`, `genres.test.tsx`; E2E `admin.spec.ts`, `authors.spec.ts`, `publishers.spec.ts`.
 
 Las tres pantallas comparten las mismas reglas:
 
@@ -345,6 +345,52 @@ Verificado por: API `book.spec.ts` (stock entero ≥ 0), `book-commands.spec.ts`
 | 1   | Cada libro tiene un stock en unidades (entero, mayor o igual a 0) que se define al crearlo y se puede corregir al editarlo               |
 | 2   | "Disponible" deja de ser un dato manual: un libro está disponible si su stock es mayor que 0 (filtro, insignia y CSV siguen funcionando) |
 | 3   | El listado, el detalle y el CSV muestran el stock                                                                                        |
+
+### RF-18 · Fecha de nacimiento y biografía del autor ✅
+
+Verificado por: API `author.spec.ts` (fecha real, no futura, biografía ≤ 1000), `authors.spec.ts` › "updates only what it receives and audits the previous values", `references.http.spec.ts` › "answers 400 to a malformed, impossible or future birth date"; INT `prisma-author.repository.int-spec.ts` › "stores the birth date as a calendar day (no time-zone shift) and the biography as is", `seed.int-spec.ts` › "loads birth date and biography for every demo author (birth date only when known)", `prisma-author.repository.int-spec.ts` › "pages authors on the database, sorted by name, with the total"; API `authors.spec.ts` › "returns one page of authors sorted by name with pagination metadata", `references.http.spec.ts` › "paginates on the server when page or limit are sent, and lists everything otherwise"; WEB `authors.test.tsx` ("asks the server for one page at a time…", "steps back to the last page…"); E2E `authors.spec.ts`.
+
+| CA  | Criterio de aceptación                                                                                                                                                                                                                                                |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Un autor puede tener fecha de nacimiento y una biografía breve (hasta 1.000 caracteres); ambas son **opcionales** porque no siempre se conocen                                                                                                                        |
+| 2   | La fecha debe ser real (`2024-02-30` no) y no futura; se guarda como día calendario (`DATE`), sin corrimientos por zona horaria; si no, responde 400                                                                                                                  |
+| 3   | Editar es parcial: un campo no enviado conserva su valor y `null` lo borra; el cambio queda en `audit_logs` con los valores anteriores                                                                                                                                |
+| 4   | La pantalla de autores es solo la tabla (fecha, extracto de la biografía y acciones); "Agregar" abre "Nuevo autor" (al guardar vuelve a la lista) y el lápiz abre "Editar autor" con los datos cargados, que al guardar se queda en la página con un mensaje de éxito |
+| 5   | Editoriales y géneros no cambian: siguen teniendo solo nombre                                                                                                                                                                                                         |
+| 6   | La tabla pagina **en el servidor** (RF-04): `GET /authors?page&limit` devuelve esa página con `meta` y orden estable por nombre; sin `page` ni `limit` lista todos (lo usa el selector de autor del formulario de libro); `limit` > 100 o `page` < 1 responde 400     |
+| 7   | Si al eliminar queda vacía la página actual, la tabla retrocede a la última página existente                                                                                                                                                                          |
+
+### RF-19 · País y pantalla de la editorial ✅
+
+Verificado por: API `publisher.spec.ts` (país normalizado y ≤ 80), `publishers.spec.ts` › "creates a normalized publisher with country…", "updates only what it receives…", "returns one page of publishers…", `references.http.spec.ts` › "publishers (country on top of the shared catalog rules)"; INT `prisma-publisher.repository.int-spec.ts`, `seed.int-spec.ts` › "loads the country of every demo publisher"; WEB `publishers.test.tsx`; E2E `publishers.spec.ts`.
+
+| CA  | Criterio de aceptación                                                                                                                                                                                          |
+| --- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Una editorial puede tener un país (hasta 80 caracteres), **opcional**; editar es parcial: un campo no enviado conserva su valor y `null` borra el país; el cambio queda en `audit_logs`                         |
+| 2   | La pantalla de editoriales es solo la tabla (Nombre, País, Libros activos, Acciones), con las mismas reglas de RF-18: "Agregar" abre "Nueva editorial", el lápiz abre "Editar editorial" con los datos cargados |
+| 3   | La tabla pagina **en el servidor** (RF-04): `GET /publishers?page&limit`; sin `page` ni `limit` lista todas (lo usa el selector del formulario de libro); `limit` > 100 o `page` < 1 responde 400               |
+| 4   | Géneros no cambian: siguen teniendo solo nombre                                                                                                                                                                 |
+
+### RF-20 · Descripción y pantalla del género ✅
+
+Verificado por: API `genre.spec.ts` (descripción normalizada y ≤ 500), `genres.spec.ts` › "creates a normalized genre with description…", "updates only what it receives…", "returns one page of genres…", `references.http.spec.ts` › "genres (description on top of the shared catalog rules)"; INT `prisma-genre.repository.int-spec.ts`, `seed.int-spec.ts` › "loads the description of every demo genre"; WEB `genres.test.tsx`; E2E `admin.spec.ts` › "an administrator creates, edits and deletes a genre".
+
+| CA  | Criterio de aceptación                                                                                                                                                                                                         |
+| --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| 1   | Un género puede tener una descripción de texto libre (hasta 500 caracteres), **opcional**; editar es parcial: un campo no enviado conserva su valor y `null` borra la descripción; el cambio queda en `audit_logs`             |
+| 2   | La pantalla de géneros es solo la tabla (Nombre, Descripción, Libros activos, Acciones), con la misma estructura de autores y editoriales: "Agregar" abre "Nuevo género", el lápiz abre "Editar género" con los datos cargados |
+| 3   | La tabla pagina **en el servidor** (RF-04): `GET /genres?page&limit`; sin `page` ni `limit` lista todos (lo usa el selector del formulario de libro); `limit` > 100 o `page` < 1 responde 400                                  |
+
+### RF-21 · Exportar autores, editoriales y géneros a CSV ✅
+
+Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts`, `references.http.spec.ts` › "catalog CSV export"; WEB `references.test.tsx` › "ExportReferencesButton", `references.api.test.ts`; E2E `catalog-export.spec.ts`.
+
+| CA  | Criterio de aceptación                                                                                                                                                                                                                    |
+| --- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Cada pantalla (Autores, Editoriales, Géneros) tiene su botón **Exportar CSV**, junto a "Agregar"; `GET /authors/export`, `/publishers/export` y `/genres/export` descargan `autores`, `editoriales` y `generos` con la fecha en el nombre |
+| 2   | Exporta **todos** los registros ordenados por nombre (no solo la página visible); columnas: ID, Nombre, el dato propio (fecha de nacimiento y biografía, país o descripción) y Libros activos                                             |
+| 3   | El archivo abre bien en Excel (BOM UTF-8), cita las comas y saltos de línea, y neutraliza celdas que una planilla ejecutaría como fórmula (`=`, `+`, `-`, `@`)                                                                            |
+| 4   | Solo los administradores pueden exportar (otros perfiles reciben 403) y cada exportación queda en `audit_logs` como `EXPORT`, con la cantidad de filas                                                                                    |
 
 ### RF-16 · Ventas 🛠
 
