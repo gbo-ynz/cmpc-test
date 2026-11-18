@@ -7,6 +7,7 @@ import { AuditModule } from './modules/audit/audit.module';
 import { AuthModule } from './modules/auth/auth.module';
 import { BooksModule } from './modules/books/books.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
+import { DashboardModule } from './modules/dashboard/dashboard.module';
 import { ReferencesModule } from './modules/references/references.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { UsersModule } from './modules/users/users.module';
@@ -27,6 +28,7 @@ const RATE_LIMIT = { ttl: 60_000, limit: 120 };
     AuthModule,
     BooksModule,
     CatalogModule,
+    DashboardModule,
     ReferencesModule,
     SalesModule,
     UsersModule,
