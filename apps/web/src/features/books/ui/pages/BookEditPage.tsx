@@ -1,4 +1,5 @@
 import { Link, useParams } from 'react-router-dom';
+import { bookSaveErrorText } from './book-save-error';
 import { ErrorBanner } from '../../../../shared/ui/ErrorBanner';
 import { Spinner } from '../../../../shared/ui/Spinner';
 import { SuccessBanner } from '../../../../shared/ui/SuccessBanner';
@@ -36,7 +37,11 @@ export default function BookEditPage() {
         <SuccessBanner message="Los cambios se guardaron correctamente." />
       ) : null}
       {saveBook.isError ? (
-        <ErrorBanner error={saveBook.error} title="No se pudo guardar el libro" />
+        <ErrorBanner
+          error={saveBook.error}
+          title="No se pudo guardar el libro"
+          message={bookSaveErrorText(saveBook.error)}
+        />
       ) : null}
       {/* A new updatedAt remounts the form with the saved values: clean state, current cover. */}
       <BookForm

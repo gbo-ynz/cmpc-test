@@ -7,6 +7,7 @@ import type { BookData } from '../domain/book-data';
 import { BookRepository } from '../domain/book.repository';
 import { type BookInput, resolveBookInput } from './book-input';
 import { BookView, toBookView } from './book-view';
+import { ensureUniqueBook } from './ensure-unique-book';
 
 export interface CreateBookCommand {
   readonly data: BookInput;
@@ -26,6 +27,7 @@ export class CreateBookUseCase {
   async execute({ data, actorId }: CreateBookCommand): Promise<BookView> {
     const book = Book.create((await resolveBookInput(this.references, data)) as BookData);
     return this.transactions.run(async () => {
+      await ensureUniqueBook(this.books, book);
       const saved = await this.books.save(book);
       await this.audit.record({
         action: 'CREATE',

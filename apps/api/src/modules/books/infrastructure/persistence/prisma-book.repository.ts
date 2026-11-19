@@ -1,4 +1,5 @@
 import { Injectable } from '@nestjs/common';
+import { asDuplicateError, hasActiveDuplicate } from './book-identity';
 import { Paginated, paginate, toSkip } from '../../../../shared/domain/pagination';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import type { Book } from '../../domain/book';
@@ -53,13 +54,13 @@ export class PrismaBookRepository implements BookRepository {
     }
   }
 
+  hasDuplicate = (book: Book): Promise<boolean> => hasActiveDuplicate(this.prisma.db, book);
+
   async save(book: Book): Promise<Book> {
     const data = toPersistence(book);
-    const record = await this.prisma.db.book.upsert({
-      where: { id: book.id },
-      create: data,
-      update: data,
-      include: BOOK_INCLUDE,
+    const write = { where: { id: book.id }, create: data, update: data, include: BOOK_INCLUDE };
+    const record = await this.prisma.db.book.upsert(write).catch((error: unknown) => {
+      throw asDuplicateError(error, book);
     });
     return toDomain(record);
   }

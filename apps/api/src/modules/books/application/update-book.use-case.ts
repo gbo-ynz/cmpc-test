@@ -6,6 +6,7 @@ import { BOOK_ENTITY_TYPE } from '../domain/book';
 import { BookRepository } from '../domain/book.repository';
 import { type BookInput, resolveBookInput } from './book-input';
 import { BookView, toBookView } from './book-view';
+import { ensureUniqueBook } from './ensure-unique-book';
 import { requireBook } from './require-book';
 
 export interface UpdateBookCommand {
@@ -27,7 +28,9 @@ export class UpdateBookUseCase {
     const resolved = await resolveBookInput(this.references, changes);
     return this.transactions.run(async () => {
       const current = await requireBook(this.books, id);
-      const saved = await this.books.save(current.update(resolved));
+      const changed = current.update(resolved);
+      await ensureUniqueBook(this.books, changed);
+      const saved = await this.books.save(changed);
       await this.audit.record({
         action: 'UPDATE',
         entityType: BOOK_ENTITY_TYPE,

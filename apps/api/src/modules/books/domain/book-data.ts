@@ -19,7 +19,8 @@ export interface NormalizedBookData extends Omit<BookData, 'price'> {
 }
 
 export function requiredText(value: string | undefined, field: string, maxLength: number): string {
-  const text = value?.trim() ?? '';
+  // Inner runs of spaces collapse too: "Cien   años" and "Cien años" are the same title.
+  const text = value?.trim().replace(/\s+/g, ' ') ?? '';
   if (text.length === 0) throw new InvalidBookError(`${field} is required`);
   if (text.length > maxLength) {
     throw new InvalidBookError(`${field} must be at most ${maxLength} characters`);

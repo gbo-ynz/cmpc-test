@@ -1,4 +1,4 @@
-import { NotFoundError, ValidationError } from '../../../shared/domain/domain.error';
+import { ConflictError, NotFoundError, ValidationError } from '../../../shared/domain/domain.error';
 
 export class BookNotFoundError extends NotFoundError {
   constructor(id: string) {
@@ -7,3 +7,10 @@ export class BookNotFoundError extends NotFoundError {
 }
 
 export class InvalidBookError extends ValidationError {}
+
+/** Among active books, title (ignoring case), author and publisher identify a book. */
+export class DuplicateBookError extends ConflictError {
+  constructor(title: string) {
+    super(`"${title}" already exists with the same author and publisher`);
+  }
+}

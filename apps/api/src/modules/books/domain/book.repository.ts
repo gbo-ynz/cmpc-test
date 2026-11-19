@@ -15,6 +15,9 @@ export abstract class BookRepository {
   /** Streams every matching book in batches (used by exports). */
   abstract streamAll(query: BookQuery): AsyncIterable<readonly Book[]>;
 
+  /** Whether ANOTHER active book has the same title (ignoring case), author and publisher. */
+  abstract hasDuplicate(book: Book): Promise<boolean>;
+
   /** Inserts or updates the aggregate and returns the persisted state. */
   abstract save(book: Book): Promise<Book>;
 }

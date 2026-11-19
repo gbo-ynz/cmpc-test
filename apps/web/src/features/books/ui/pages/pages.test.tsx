@@ -151,6 +151,17 @@ describe('BookCreatePage', () => {
 
     expect(await screen.findByText('title too long')).toBeInTheDocument();
   });
+
+  it('explains that the book already exists when the API answers 409', async () => {
+    api.create.mockRejectedValue(new ApiError('exists', 409, 'CONFLICT'));
+    renderWithProviders(<BookCreatePage />, { route: '/books/new', path: '/books/new' });
+
+    await submitNewBook();
+
+    expect(
+      await screen.findByText('Ya existe un libro con ese título, autor y editorial.'),
+    ).toBeInTheDocument();
+  });
 });
 
 describe('BookEditPage', () => {
@@ -193,7 +204,7 @@ describe('BookEditPage', () => {
     expect(screen.queryByRole('link', { name: /Volver al libro/ })).not.toBeInTheDocument();
   });
 
-  it('shows save errors', async () => {
+  it('explains that editing collides with another existing book (409)', async () => {
     api.get.mockResolvedValue(BOOK);
     api.update.mockRejectedValue(new ApiError('Conflict', 409, 'CONFLICT'));
     renderWithProviders(<BookEditPage />, { route: '/books/b1/edit', path: '/books/:id/edit' });
@@ -204,7 +215,9 @@ describe('BookEditPage', () => {
     );
     await userEvent.click(screen.getByRole('button', { name: 'Guardar cambios' }));
 
-    expect(await screen.findByText('Conflict')).toBeInTheDocument();
+    expect(
+      await screen.findByText('Ya existe un libro con ese título, autor y editorial.'),
+    ).toBeInTheDocument();
   });
 
   it('shows load errors', async () => {

@@ -7,7 +7,7 @@ import {
   seededReferences,
 } from '../../../test-utils/fakes';
 import { InMemoryBookRepository } from '../../../test-utils/in-memory-book.repository';
-import { BookNotFoundError, InvalidBookError } from '../domain/book.errors';
+import { BookNotFoundError, DuplicateBookError, InvalidBookError } from '../domain/book.errors';
 import { CreateBookUseCase } from './create-book.use-case';
 import { DeleteBookUseCase } from './delete-book.use-case';
 import { UpdateBookUseCase } from './update-book.use-case';
@@ -119,5 +119,62 @@ describe('DeleteBookUseCase', () => {
     expect(books.stored(existing.id)?.isDeleted).toBe(true);
     await expect(books.findById(existing.id)).resolves.toBeNull();
     expect(audit.entries[0]).toMatchObject({ action: 'DELETE', entityId: existing.id });
+  });
+});
+
+describe('duplicate books (same title, author and publisher)', () => {
+  it('rejects the same book ignoring case and extra spaces, without persisting or auditing', async () => {
+    const { create, books, audit } = setup();
+
+    await expect(
+      create.execute({ data: bookInput({ title: '  rAYUELA ' }), actorId: ACTOR_ID }),
+    ).rejects.toThrow(DuplicateBookError);
+    expect(audit.entries).toHaveLength(0);
+    expect(
+      (await books.findPage({ page: 1, limit: 10, filters: {}, sort: [] })).items,
+    ).toHaveLength(1);
+  });
+
+  it('allows the same title by another author or publisher', async () => {
+    const { create, references } = setup();
+    const otherAuthor = references.seed('authors', 'Otro autor');
+    const otherPublisher = references.seed('publishers', 'Otra editorial');
+
+    await create.execute({ data: bookInput({ authorId: otherAuthor.id }), actorId: ACTOR_ID });
+    await create.execute({
+      data: bookInput({ publisherId: otherPublisher.id }),
+      actorId: ACTOR_ID,
+    });
+  });
+
+  it('lets a deleted book be loaded again', async () => {
+    const { create } = setup([makeBook().softDelete()]);
+
+    await expect(create.execute({ data: bookInput(), actorId: ACTOR_ID })).resolves.toMatchObject({
+      title: 'Rayuela',
+    });
+  });
+
+  it('rejects editing a book into another existing one, but not saving a book unchanged', async () => {
+    const other = makeBook({ title: 'Ficciones' });
+    const { update, existing } = setup([makeBook(), other]);
+
+    await expect(
+      update.execute({ id: other.id, changes: { title: 'Rayuela' }, actorId: ACTOR_ID }),
+    ).rejects.toThrow(DuplicateBookError);
+    await expect(
+      update.execute({ id: existing.id, changes: { price: 9990 }, actorId: ACTOR_ID }),
+    ).resolves.toMatchObject({ price: 9990 });
+  });
+
+  it('stores the title with inner spaces collapsed', async () => {
+    const { create } = setup([]);
+
+    const created = await create.execute({
+      data: bookInput({ title: ' Cien   años  ' }),
+      actorId: ACTOR_ID,
+    });
+
+    expect(created.title).toBe('Cien años');
   });
 });

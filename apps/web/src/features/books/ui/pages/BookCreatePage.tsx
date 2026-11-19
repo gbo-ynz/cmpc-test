@@ -1,4 +1,5 @@
 import { Link, useNavigate } from 'react-router-dom';
+import { bookSaveErrorText } from './book-save-error';
 import { ErrorBanner } from '../../../../shared/ui/ErrorBanner';
 import { useSaveBook } from '../../application/book-mutations';
 import type { BookFormValues } from '../../domain/book-form.schema';
@@ -24,7 +25,11 @@ export default function BookCreatePage() {
       </nav>
       <h1>Nuevo libro</h1>
       {saveBook.isError ? (
-        <ErrorBanner error={saveBook.error} title="No se pudo guardar el libro" />
+        <ErrorBanner
+          error={saveBook.error}
+          title="No se pudo guardar el libro"
+          message={bookSaveErrorText(saveBook.error)}
+        />
       ) : null}
       <BookForm submitLabel="Crear libro" onSubmit={handleSubmit} />
     </section>

@@ -26,6 +26,19 @@ export class InMemoryBookRepository implements BookRepository {
     yield this.active();
   }
 
+  async hasDuplicate(book: Book): Promise<boolean> {
+    const { title, author, publisher } = book.snapshot();
+    return this.active().some((other) => {
+      const data = other.snapshot();
+      return (
+        other.id !== book.id &&
+        data.title.toLowerCase() === title.toLowerCase() &&
+        data.author.id === author.id &&
+        data.publisher.id === publisher.id
+      );
+    });
+  }
+
   async save(book: Book): Promise<Book> {
     this.books.set(book.id, book);
     return book;
