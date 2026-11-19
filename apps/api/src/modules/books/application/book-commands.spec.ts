@@ -87,6 +87,23 @@ describe('UpdateBookUseCase', () => {
     });
   });
 
+  it('audits the previous value of every field it changes, and only those', async () => {
+    const { audit, update, references, existing } = setup();
+    const poetry = references.seed('genres', 'Poesía');
+    const before = existing.snapshot();
+
+    await update.execute({
+      id: existing.id,
+      changes: { price: 9990, genreId: poetry.id },
+      actorId: ACTOR_ID,
+    });
+
+    expect(audit.entries[0]?.metadata).toEqual({
+      changes: { price: 9990, genreId: poetry.id },
+      previous: { price: before.price.amount, genreId: before.genre.id },
+    });
+  });
+
   it('moves the book to another existing genre', async () => {
     const { references, update, existing } = setup();
     const poetry = references.seed('genres', 'Poesía');

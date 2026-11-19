@@ -2,7 +2,8 @@ import { Injectable } from '@nestjs/common';
 import { AuditLogger } from '../../../shared/application/audit-logger.port';
 import { TransactionManager } from '../../../shared/application/transaction-manager.port';
 import { ReferenceRepository } from '../../references/domain/reference.repository';
-import { BOOK_ENTITY_TYPE } from '../domain/book';
+import { BOOK_ENTITY_TYPE, type Book } from '../domain/book';
+import { definedChanges } from '../domain/book-data';
 import { BookRepository } from '../domain/book.repository';
 import { type BookInput, resolveBookInput } from './book-input';
 import { BookView, toBookView } from './book-view';
@@ -36,9 +37,24 @@ export class UpdateBookUseCase {
         entityType: BOOK_ENTITY_TYPE,
         entityId: id,
         actorId,
-        metadata: { changes },
+        metadata: { changes, previous: previousValues(current, changes) },
       });
       return toBookView(saved);
     });
   }
+}
+
+/** What the book held before the edit, for exactly the fields the edit touched. */
+function previousValues(current: Book, changes: Partial<BookInput>): Partial<BookInput> {
+  const { title, author, publisher, genre, price, stock } = current.snapshot();
+  const before: BookInput = {
+    title,
+    authorId: author.id,
+    publisherId: publisher.id,
+    genreId: genre.id,
+    price: price.amount,
+    stock,
+  };
+  const touched = Object.keys(definedChanges(changes)) as (keyof BookInput)[];
+  return Object.fromEntries(touched.map((key) => [key, before[key]]));
 }
