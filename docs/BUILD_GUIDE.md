@@ -100,13 +100,13 @@ Los puertos son `abstract class`: funcionan como interfaces de TypeScript **y** 
 
 ## 4. Segregación de clases (SOLID aplicado)
 
-| Principio                         | Cómo se aplica aquí                                                                                                            | Antipatrón que evitamos                                  |
-| --------------------------------- | ------------------------------------------------------------------------------------------------------------------------------ | -------------------------------------------------------- |
-| **S** — Responsabilidad única     | Un caso de uso por clase; controladores separados en Query / Command / Image; mapper y query builder separados del repositorio | Un `BooksService` con 12 métodos                         |
-| **O** — Abierto/cerrado           | Un nuevo campo de orden = una entrada en `SORT_COLUMNS`; un nuevo almacenamiento = una nueva clase adaptador                   | `switch` que crecen con cada feature                     |
-| **L** — Sustitución de Liskov     | Cada adaptador es intercambiable con su fake (los tests lo demuestran)                                                         | Adaptadores que lanzan "not implemented"                 |
-| **I** — Segregación de interfaces | `UserRepository` solo expone `findByEmail`; `ImageStorage` solo `save/remove`                                                  | Un `Repository<T>` genérico con 10 métodos que nadie usa |
-| **D** — Inversión de dependencias | Los casos de uso dependen de puertos abstractos; solo los `*.module.ts` conocen las clases concretas                           | `new PrismaClient()` dentro de la lógica de negocio      |
+| Principio                         | Cómo se aplica aquí                                                                                                                                      | Antipatrón que evitamos                                  |
+| --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| **S** — Responsabilidad única     | Un caso de uso por clase; controladores separados en Query / Command / Image; mapper y query builder separados del repositorio                           | Un `BooksService` con 12 métodos                         |
+| **O** — Abierto/cerrado           | Un nuevo campo de orden = una entrada en `SORT_COLUMNS`; un nuevo almacenamiento = una nueva clase adaptador                                             | `switch` que crecen con cada feature                     |
+| **L** — Sustitución de Liskov     | Cada adaptador es intercambiable con su fake (los tests lo demuestran)                                                                                   | Adaptadores que lanzan "not implemented"                 |
+| **I** — Segregación de interfaces | `UserRepository` (login) solo expone `findByEmail` y `findById`, separado de `ManagedUserRepository` (administración); `ImageStorage` solo `save/remove` | Un `Repository<T>` genérico con 10 métodos que nadie usa |
+| **D** — Inversión de dependencias | Los casos de uso dependen de puertos abstractos; solo los `*.module.ts` conocen las clases concretas                                                     | `new PrismaClient()` dentro de la lógica de negocio      |
 
 ### Cómo dividir un archivo que superó las 60 líneas
 
