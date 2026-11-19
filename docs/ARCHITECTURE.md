@@ -40,17 +40,26 @@ src/
 ├── shared/
 │   ├── domain/                    jerarquía de DomainError, paginación, AuthenticatedUser
 │   ├── application/               puertos transversales: TransactionManager, AuditLogger
-│   └── infrastructure/            Prisma (transacciones con ALS), interceptores, filtro, decoradores
+│   └── infrastructure/            Prisma (transacciones con ALS) y el pipeline HTTP: filtro de errores,
+│                                  interceptores de respuesta y de log, DTO de paginación
 └── modules/                       una carpeta por bounded context
     ├── books/       domain · application · infrastructure · presentation   inventario, portadas, CSV
     ├── catalog/     domain · application · infrastructure · presentation   opciones de los filtros
     ├── references/  domain · application · infrastructure · presentation   autores, editoriales y géneros
     ├── auth/        domain · application · infrastructure · presentation   login, JWT y perfiles
+    │   ├── infrastructure/http/   autorización: cada guard junto a su decorador (@Public, @Roles, @CurrentUser)
+    │   └── index.ts               API pública de autorización: los demás módulos marcan rutas solo desde acá
     ├── users/       domain · application · infrastructure · presentation   administración de usuarios
     ├── sales/       domain · application · infrastructure · presentation   ventas y control de stock
     ├── dashboard/   domain · application · infrastructure · presentation   cifras por perfil (solo lectura)
+    ├── health/      un controlador y su módulo: `GET /api/health` (API + base de datos)
     └── audit/       infrastructure (implementa el puerto compartido AuditLogger)
 ```
+
+La agrupación es **por cohesión, no por tipo técnico**: un guard y el decorador que lo configura comparten
+una clave de metadata, así que viven juntos en `auth`. `shared/infrastructure/http` conserva solo lo que es
+transversal a todos los módulos (el pipeline de errores y respuestas). Los demás módulos usan la autorización
+a través de `modules/auth/index.ts`, nunca entrando a sus carpetas internas.
 
 ### La regla de dependencias
 

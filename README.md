@@ -326,14 +326,14 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 ### Backend (NestJS + TypeScript)
 
-| Requisito                                | Implementación                                                                                                                                            |
-| ---------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Arquitectura modular y escalable (SOLID) | Un módulo por bounded context (`modules/{auth,books,catalog,references,users,sales,dashboard,audit}`), DDD + hexagonal; ver [Arquitectura](#arquitectura) |
-| Autenticación JWT                        | `modules/auth/` (`jwt.strategy.ts`, `jwt-auth.guard.ts` global, `@Public()` para las excepciones)                                                         |
-| Endpoints RESTful para el CRUD de libros | `modules/books/presentation/books-query.controller.ts`, `books-command.controller.ts`                                                                     |
-| Exportación de datos en CSV              | `GET /api/books/export` → `export-books-csv.use-case.ts`, `book-csv.serializer.ts` (streaming)                                                            |
-| Soft delete                              | `Book.softDelete()` en `modules/books/domain/book.ts`; todas las consultas filtran `deleted_at IS NULL`                                                   |
-| Logging para auditoría de operaciones    | Puerto `AuditLogger` → tabla `audit_logs` en la misma transacción; ver [Logging y auditoría](#logging-y-auditoría)                                        |
+| Requisito                                | Implementación                                                                                                                                                   |
+| ---------------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Arquitectura modular y escalable (SOLID) | Un módulo por bounded context (`modules/{auth,books,catalog,references,users,sales,dashboard,health,audit}`), DDD + hexagonal; ver [Arquitectura](#arquitectura) |
+| Autenticación JWT                        | `modules/auth/` (`jwt.strategy.ts`, `jwt-auth.guard.ts` global, `@Public()` para las excepciones); los decoradores se exponen en `modules/auth/index.ts`         |
+| Endpoints RESTful para el CRUD de libros | `modules/books/presentation/books-query.controller.ts`, `books-command.controller.ts`                                                                            |
+| Exportación de datos en CSV              | `GET /api/books/export` → `export-books-csv.use-case.ts`, `book-csv.serializer.ts` (streaming)                                                                   |
+| Soft delete                              | `Book.softDelete()` en `modules/books/domain/book.ts`; todas las consultas filtran `deleted_at IS NULL`                                                          |
+| Logging para auditoría de operaciones    | Puerto `AuditLogger` → tabla `audit_logs` en la misma transacción; ver [Logging y auditoría](#logging-y-auditoría)                                               |
 
 ### Base de datos (PostgreSQL + Prisma)
 
