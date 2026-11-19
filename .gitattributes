@@ -1,0 +1,7 @@
+# Check out text files with LF on every OS: a CRLF entrypoint breaks the API container on Windows.
+* text=auto eol=lf
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.webp binary
+*.pdf binary
