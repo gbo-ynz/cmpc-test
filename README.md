@@ -347,8 +347,8 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 190 tests                                                  |
-| Tests unitarios de servicios y controladores (NestJS) | Jest: 256 tests (más 54 de integración con PostgreSQL real)                          |
+| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 191 tests                                                  |
+| Tests unitarios de servicios y controladores (NestJS) | Jest: 261 tests (más 57 de integración con PostgreSQL real)                          |
 | Cobertura de al menos 80%                             | API 99,2% de líneas, web 95,7%; umbrales del 80% configurados en ambas apps          |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
 | README con instalación, uso y arquitectura            | Este documento                                                                       |
@@ -442,25 +442,26 @@ docs/
 
 ## Decisiones de diseño
 
-| Decisión                                                                                                                  | Fundamento                                                                                                                                                                                               |
-| ------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Puertos como `abstract class`                                                                                             | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                                                                 |
-| Agregado `Book` inmutable + value object `Price` (en centavos)                                                            | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                                                              |
-| Transacciones con `AsyncLocalStorage`                                                                                     | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                                                             |
-| Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id                     | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                                                                    |
-| El catálogo de filtros solo incluye valores con libros activos                                                            | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                                                                       |
-| Soft delete (`deleted_at`)                                                                                                | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                                                                   |
-| Tabla de auditoría escrita dentro de la transacción de negocio                                                            | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                                                                   |
-| El JWT se valida contra la base de datos en cada petición                                                                 | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria).                                         |
-| Controladores CQS (consulta / comando / imagen)                                                                           | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                                                                    |
-| Exportación CSV en streaming con protección contra inyección de fórmulas                                                  | Memoria constante; seguro de abrir en Excel.                                                                                                                                                             |
-| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal              | El MIME type lo controla el cliente.                                                                                                                                                                     |
-| El stock se descuenta al **completar** la venta, con `UPDATE … WHERE stock >= n` por línea dentro de una transacción      | Dos ventas simultáneas nunca dejan stock negativo y, si una línea falla, se revierte todo. El estado de la venta también cambia con una condición (`PENDING`), así que solo una petición puede cerrarla. |
-| Cada línea de venta guarda el precio unitario del momento                                                                 | Cambiar el precio de un libro nunca altera una venta pasada.                                                                                                                                             |
-| El dashboard se recorta en la API según el perfil, y para un usuario ni siquiera se consultan los datos de administración | Ocultar cifras solo en la pantalla no protege nada: la respuesta nunca las contiene.                                                                                                                     |
-| Los usuarios se desactivan, no se borran                                                                                  | La auditoría y las ventas conservan su autoría; el correo sigue ocupado.                                                                                                                                 |
-| Despliegue en el mismo origen (nginx redirige `/api`)                                                                     | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                                                                      |
-| JWT en `localStorage`                                                                                                     | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                                                                |
+| Decisión                                                                                                                                                      | Fundamento                                                                                                                                                                                                     |
+| ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Puertos como `abstract class`                                                                                                                                 | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                                                                       |
+| Agregado `Book` inmutable + value object `Price` (en centavos)                                                                                                | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                                                                    |
+| Transacciones con `AsyncLocalStorage`                                                                                                                         | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                                                                   |
+| Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id                                                         | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                                                                          |
+| El catálogo de filtros solo incluye valores con libros activos                                                                                                | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                                                                             |
+| Soft delete (`deleted_at`)                                                                                                                                    | Facilita la auditoría, es reversible y todas las consultas lo filtran.                                                                                                                                         |
+| Tabla de auditoría escrita dentro de la transacción de negocio                                                                                                | No existe registro de auditoría sin el cambio, ni cambio sin registro.                                                                                                                                         |
+| El JWT se valida contra la base de datos en cada petición                                                                                                     | Una firma válida no basta: si el usuario fue eliminado, la API responde 401, y los cambios de rol aplican de inmediato (costo: una consulta por clave primaria).                                               |
+| Controladores CQS (consulta / comando / imagen)                                                                                                               | Clases pequeñas y de un solo propósito (≤ 60 líneas).                                                                                                                                                          |
+| Exportación CSV en streaming con protección contra inyección de fórmulas                                                                                      | Memoria constante; seguro de abrir en Excel.                                                                                                                                                                   |
+| Validación de imágenes por magic bytes y tamaño, nombres aleatorios, borrado protegido contra path traversal                                                  | El MIME type lo controla el cliente.                                                                                                                                                                           |
+| El stock se descuenta al **completar** la venta, con `UPDATE … WHERE stock >= n` por línea dentro de una transacción                                          | Dos ventas simultáneas nunca dejan stock negativo y, si una línea falla, se revierte todo. El estado de la venta también cambia con una condición (`PENDING`), así que solo una petición puede cerrarla.       |
+| Cada línea de venta guarda el precio unitario del momento                                                                                                     | Cambiar el precio de un libro nunca altera una venta pasada.                                                                                                                                                   |
+| El dashboard se recorta en la API según el perfil, y para un usuario ni siquiera se consultan los datos de administración                                     | Ocultar cifras solo en la pantalla no protege nada: la respuesta nunca las contiene.                                                                                                                           |
+| Los usuarios se desactivan, no se borran                                                                                                                      | La auditoría y las ventas conservan su autoría; el correo sigue ocupado.                                                                                                                                       |
+| Libros duplicados: verificación en el caso de uso **y** un índice único parcial en la base (`lower(title), author_id, publisher_id WHERE deleted_at IS NULL`) | El caso de uso responde un 409 claro; el índice frena dos pedidos simultáneos que pasen la verificación a la vez. La migración se detiene si encuentra duplicados activos en lugar de elegir sola cuál borrar. |
+| Despliegue en el mismo origen (nginx redirige `/api`)                                                                                                         | Sin CORS y sin URL de la API embebida en el bundle.                                                                                                                                                            |
+| JWT en `localStorage`                                                                                                                                         | Simple para una prueba; contrapartida: exposición ante XSS. Camino a producción: cookie httpOnly `SameSite` + rotación de refresh tokens.                                                                      |
 
 ## Logging y auditoría
 
@@ -479,6 +480,7 @@ devuelve un mensaje genérico.
 
 - La disponibilidad se deriva del stock (`stock > 0`); no es un dato que se edite a mano.
 - Un libro tiene exactamente un autor, una editorial y un género (el enunciado los menciona en singular).
+- Entre los libros activos, **mismo título (sin distinguir mayúsculas ni espacios extra), autor y editorial es el mismo libro**: crearlo de nuevo responde 409. Solo el título sería demasiado estricto (dos autores pueden tener un libro con el mismo nombre) y el modelo no tiene ISBN. Un libro eliminado no impide volver a cargarlo.
 - Los precios están en CLP con hasta 2 decimales.
 - Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
 - Una venta pendiente **no reserva stock**: dos ventas pueden pedir el último ejemplar y solo la primera en completarse lo consigue; la otra recibe un 409 al completar.
@@ -490,10 +492,10 @@ devuelve un mensaje genérico.
 
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
-| API (Jest)                     | 256   | 99,2% (sentencias 98,1%; ramas 86,6%)                         |
-| Web (Vitest + Testing Library) | 190   | 95,7% (ramas 93,7%)                                           |
-| Integración (Testcontainers)   | 54    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
-| E2E (Playwright, Chromium)     | 26    | Flujos críticos de todos los módulos                          |
+| API (Jest)                     | 261   | 99,2% (sentencias 98,1%; ramas 86,7%)                         |
+| Web (Vitest + Testing Library) | 191   | 95,7% (ramas 93,8%)                                           |
+| Integración (Testcontainers)   | 57    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
+| E2E (Playwright, Chromium)     | 27    | Flujos críticos de todos los módulos                          |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).
 
@@ -524,6 +526,7 @@ npm run test:int       # requiere Docker en ejecución; no forma parte del pre-p
 | `sales-indexes.int-spec`               | El listado de ventas y el filtro "libros con stock" usan sus índices compuestos (planes con `EXPLAIN`)                                                                             |
 | `prisma-sale-stock.int-spec`           | Dos descuentos simultáneos sobre el último ejemplar: solo uno se aplica; si una línea no tiene stock, se revierte toda la venta                                                    |
 | `prisma-dashboard.repository.int-spec` | Cifras del dashboard: libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` con decimales                                      |
+| `prisma-book.repository.int-spec`      | Un libro con el mismo título (sin importar mayúsculas), autor y editorial se detecta, y el índice único lo rechaza aunque se saltee la verificación; uno eliminado no bloquea      |
 | `prisma-*.repository.int-spec` (resto) | Autores, editoriales, géneros, usuarios y ventas: orden, paginación, mayúsculas y reglas de borrado                                                                                |
 
 El rate limiting y los headers de seguridad se prueban levantando el `AppModule` real con `supertest`
@@ -539,20 +542,21 @@ npx -w apps/e2e playwright install chromium   # solo la primera vez
 npm run test:e2e                              # informe HTML: npm run e2e:report -w apps/e2e
 ```
 
-| Spec                                     | Qué verifica                                                                                                                     |
-| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------- |
-| `auth.setup.ts`                          | Login real; tras autenticarse vuelve a la página protegida solicitada                                                            |
-| `auth.spec.ts`                           | Redirección sin sesión, validación del formulario, credenciales inválidas, logout                                                |
-| `book-lifecycle.spec.ts`                 | Validación reactiva → alta con portada → detalle → soft delete → el género sale del filtro                                       |
-| `book-edit.spec.ts`                      | Editar desde el listado y desde el detalle: guardar mantiene la pantalla, confirma y vuelve al inventario                        |
-| `book-list.spec.ts`                      | Filtros combinados, búsqueda con debounce (1 request), orden multi-campo, paginación                                             |
-| `book-export.spec.ts`                    | El CSV descargado contiene exactamente las filas filtradas                                                                       |
-| `admin.spec.ts`                          | Géneros (alta, edición, baja y regla de libros asociados) y perfiles: un usuario ve el dashboard operativo, no la administración |
-| `authors.spec.ts` · `publishers.spec.ts` | Alta con los datos propios (biografía, país), edición y baja desde la interfaz                                                   |
-| `catalog-export.spec.ts`                 | Exportar CSV de autores, editoriales y géneros                                                                                   |
-| `users.spec.ts`                          | Un usuario creado inicia sesión; al eliminarlo, su token deja de servir                                                          |
-| `sales.spec.ts`                          | Crear una venta vuelve al listado; completar descuenta stock; cancelar no; libro eliminado → 409 sin descontar                   |
-| `dashboard.spec.ts`                      | El administrador aterriza en el dashboard y las cifras siguen a los datos reales                                                 |
+| Spec                                     | Qué verifica                                                                                                                                 |
+| ---------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- |
+| `auth.setup.ts`                          | Login real; tras autenticarse vuelve a la página protegida solicitada                                                                        |
+| `auth.spec.ts`                           | Redirección sin sesión, validación del formulario, credenciales inválidas, logout                                                            |
+| `book-lifecycle.spec.ts`                 | Validación reactiva → alta con portada → detalle → soft delete → el género sale del filtro                                                   |
+| `book-edit.spec.ts`                      | Editar desde el listado y desde el detalle: guardar mantiene la pantalla, confirma y vuelve al inventario                                    |
+| `book-list.spec.ts`                      | Filtros combinados, búsqueda con debounce (1 request), orden multi-campo, paginación                                                         |
+| `book-export.spec.ts`                    | El CSV descargado contiene exactamente las filas filtradas                                                                                   |
+| `admin.spec.ts`                          | Géneros (alta, edición, baja y regla de libros asociados) y perfiles: un usuario ve el dashboard operativo, no la administración             |
+| `authors.spec.ts` · `publishers.spec.ts` | Alta con los datos propios (biografía, país), edición y baja desde la interfaz                                                               |
+| `catalog-export.spec.ts`                 | Exportar CSV de autores, editoriales y géneros                                                                                               |
+| `book-duplicate.spec.ts`                 | Crear un libro que ya existe (otras mayúsculas y espacios) muestra el mensaje y no se guarda; eliminado el original, se puede volver a crear |
+| `users.spec.ts`                          | Un usuario creado inicia sesión; al eliminarlo, su token deja de servir                                                                      |
+| `sales.spec.ts`                          | Crear una venta vuelve al listado; completar descuenta stock; cancelar no; libro eliminado → 409 sin descontar                               |
+| `dashboard.spec.ts`                      | El administrador aterriza en el dashboard y las cifras siguen a los datos reales                                                             |
 
 Decisiones:
 

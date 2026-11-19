@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { asDuplicateError, hasActiveDuplicate } from './book-identity';
+import { asDuplicateError, hasActiveDuplicate } from './prisma-book-identity';
 import { Paginated, paginate, toSkip } from '../../../../shared/domain/pagination';
 import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.service';
 import type { Book } from '../../domain/book';
