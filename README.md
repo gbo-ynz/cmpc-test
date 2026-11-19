@@ -49,7 +49,6 @@ ocupado. Para volver al estado inicial: `docker compose down -v && docker compos
 13. [Supuestos](#supuestos)
 14. [Testing](#testing)
 15. [Calidad de código](#calidad-de-código)
-16. [Mejoras fuera del alcance](#mejoras-fuera-del-alcance)
 
 ## Operación y datos de ejemplo
 
@@ -580,13 +579,3 @@ Decisiones:
 | Husky `pre-push`   | Tests unitarios de todos los workspaces                                                                                                |
 
 La guía para extender la aplicación respetando estas reglas está en [docs/BUILD_GUIDE.md](docs/BUILD_GUIDE.md).
-
-## Mejoras fuera del alcance
-
-- Tests de integración de los repositorios Prisma de libros y de auditoría, y ejecución del E2E en un stack aislado y efímero (hoy comparte la base y los puertos del stack local).
-- Refresh tokens en cookies httpOnly. Reserva de stock al crear una venta pendiente (hoy solo se descuenta al completar).
-- Reactivación de libros eliminados (el soft delete ya conserva los datos necesarios).
-- Adaptador `ImageStorage` compatible con S3 + redimensionamiento de imágenes.
-- Paginación por keyset para exportaciones de catálogos muy grandes; particionado de la tabla de auditoría.
-- Actualizar `prisma` a 7.x y `zod` a 4.x: `npm audit --omit=dev` reporta 4 avisos de severidad alta (agotamiento de memoria al validar colecciones enormes con `zod`, que aquí solo valida campos de formulario; y agotamiento de pila en `deepmerge-ts`, usado por la configuración del CLI de Prisma). El riesgo en este uso es bajo, pero ambas correcciones son saltos de versión mayor y conviene hacerlas con su propia verificación.
-- Pipeline de CI (GitHub Actions): lint → typecheck → test → E2E → build de imágenes.
