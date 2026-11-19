@@ -194,8 +194,9 @@ npm run dev -w apps/web                            # UI en http://localhost:5173
 
 Ingrese con las credenciales de demostración. Tras iniciar sesión, **todos los perfiles llegan primero al
 dashboard**. Si intenta abrir una página protegida sin sesión (o la sesión venció a mitad de trabajo), la
-aplicación lo lleva al login y, al autenticarse, lo devuelve a la página que había solicitado. La sesión dura
-una hora; cuando expira, cualquier operación lo redirige al login.
+aplicación lo lleva al login y, al autenticarse, lo devuelve a la página que había solicitado. En cambio, si
+cierra sesión usted mismo, el siguiente ingreso vuelve a empezar en el dashboard. La sesión dura una hora;
+cuando expira, cualquier operación lo redirige al login.
 
 ![Login](docs/screenshots/01-login.png)
 
@@ -347,7 +348,7 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
-| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 191 tests                                                  |
+| Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 194 tests                                                  |
 | Tests unitarios de servicios y controladores (NestJS) | Jest: 262 tests (más 57 de integración con PostgreSQL real)                          |
 | Cobertura de al menos 80%                             | API 99,2% de líneas, web 95,7%; umbrales del 80% configurados en ambas apps          |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
@@ -493,9 +494,9 @@ devuelve un mensaje genérico.
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
 | API (Jest)                     | 262   | 99,2% (sentencias 98,1%; ramas 86,7%)                         |
-| Web (Vitest + Testing Library) | 191   | 95,7% (ramas 93,8%)                                           |
+| Web (Vitest + Testing Library) | 194   | 95,7% (ramas 93,8%)                                           |
 | Integración (Testcontainers)   | 57    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
-| E2E (Playwright, Chromium)     | 27    | Flujos críticos de todos los módulos                          |
+| E2E (Playwright, Chromium)     | 28    | Flujos críticos de todos los módulos                          |
 
 Cada criterio de aceptación del enunciado está vinculado a su test en [docs/SPEC.md](docs/SPEC.md).
 
@@ -556,11 +557,12 @@ npm run test:e2e                              # informe HTML: npm run e2e:report
 | `book-duplicate.spec.ts`                 | Crear un libro que ya existe (otras mayúsculas y espacios) muestra el mensaje y no se guarda; eliminado el original, se puede volver a crear |
 | `users.spec.ts`                          | Un usuario creado inicia sesión; al eliminarlo, su token deja de servir                                                                      |
 | `sales.spec.ts`                          | Crear una venta vuelve al listado; completar descuenta stock; cancelar no; libro eliminado → 409 sin descontar                               |
+| `logout-landing.spec.ts`                 | Cerrar sesión desde cualquier página y volver a entrar lleva al dashboard, no a la última página                                             |
 | `dashboard.spec.ts`                      | El administrador aterriza en el dashboard y las cifras siguen a los datos reales                                                             |
 
 Decisiones:
 
-- **Una sola sesión por corrida:** el login está limitado a 5 intentos por minuto. El setup guarda la sesión
+- **Una sola sesión por corrida:** el login está limitado a 5 intentos por minuto, y una corrida desde cero hace exactamente 5 (el setup, el usuario común, las credenciales inválidas, el usuario creado y el cierre de sesión): un test más que inicie sesión superaría el límite. El setup guarda la sesión
   y la reutiliza mientras la API la acepte (`/api/auth/me`), en lugar de relajar el límite para los tests.
 - **Datos aislados:** cada corrida crea sus libros (vía API) bajo un género único y los elimina al terminar;
   las aserciones siempre se hacen a través de la interfaz.

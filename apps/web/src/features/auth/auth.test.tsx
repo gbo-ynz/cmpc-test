@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { act, render, renderHook, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import type { ReactNode } from 'react';
-import { MemoryRouter, Route, Routes } from 'react-router-dom';
+import { MemoryRouter, Route, Routes, useLocation } from 'react-router-dom';
 import { AuthenticatedLayout } from '../../app/AuthenticatedLayout';
 import { ApiError } from '../../shared/api/api-error';
 import { SESSION_EXPIRED_EVENT, httpClient } from '../../shared/api/http-client';
@@ -68,6 +68,22 @@ describe('AuthProvider', () => {
     });
 
     expect(result.current.user).toBeNull();
+  });
+
+  it('tells a deliberate sign out apart from an expired session', async () => {
+    vi.spyOn(authApi, 'login').mockResolvedValue({ token: 'jwt', user: USER });
+    const { result } = renderHook(() => useAuth(), { wrapper });
+    await act(() => result.current.login({ email: USER.email, password: 'Admin123!' }));
+    expect(result.current.signedOutByUser).toBe(false);
+
+    act(() => result.current.logout());
+    expect(result.current.signedOutByUser).toBe(true);
+
+    await act(() => result.current.login({ email: USER.email, password: 'Admin123!' }));
+    act(() => {
+      window.dispatchEvent(new Event(SESSION_EXPIRED_EVENT));
+    });
+    expect(result.current.signedOutByUser).toBe(false);
   });
 
   it('fails loudly when used outside the provider', () => {
@@ -171,6 +187,27 @@ describe('RequireAuth', () => {
 
     expect(screen.getByText('Login screen')).toBeInTheDocument();
   });
+
+  it.each([
+    [false, '/genres'],
+    [true, 'sin destino'],
+  ])(
+    'remembers the page only when the session ended on its own (signed out by user: %s)',
+    (signedOutByUser, expected) => {
+      function LoginProbe() {
+        const { state } = useLocation();
+        return <p>{(state as { from?: string } | null)?.from ?? 'sin destino'}</p>;
+      }
+      renderWithProviders(<RequireAuth />, {
+        route: '/genres',
+        path: '/genres',
+        auth: { user: null, signedOutByUser },
+        extraRoutes: { '/login': <LoginProbe /> },
+      });
+
+      expect(screen.getByText(expected)).toBeInTheDocument();
+    },
+  );
 });
 
 describe('AuthenticatedLayout menu', () => {
