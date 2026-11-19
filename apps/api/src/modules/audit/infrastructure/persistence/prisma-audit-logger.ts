@@ -5,7 +5,8 @@ import { PrismaService } from '../../../../shared/infrastructure/prisma/prisma.s
 
 /**
  * Persists the audit trail in the same transaction as the business operation
- * (via `prisma.db`) and mirrors it to stdout for log aggregation.
+ * (via `prisma.db`) and mirrors it to stdout for log aggregation once that transaction commits,
+ * so the log never reports an operation that was rolled back.
  */
 @Injectable()
 export class PrismaAuditLogger implements AuditLogger {
@@ -23,6 +24,6 @@ export class PrismaAuditLogger implements AuditLogger {
         metadata: entry.metadata as Prisma.InputJsonObject | undefined,
       },
     });
-    this.logger.log(JSON.stringify(entry));
+    this.prisma.onCommit(() => this.logger.log(JSON.stringify(entry)));
   }
 }

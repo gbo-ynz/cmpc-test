@@ -38,6 +38,68 @@ describe('PrismaService', () => {
     expect(transaction).toHaveBeenCalledTimes(1);
   });
 
+  describe('post-commit hooks', () => {
+    /** A $transaction stand-in that records the moment the transaction commits. */
+    function transactionLog(service: PrismaService, fails = false) {
+      const order: string[] = [];
+      jest.spyOn(service.client, '$transaction').mockImplementation(((
+        work: (client: unknown) => Promise<unknown>,
+      ) =>
+        work({}).then((result) => {
+          if (fails) throw new Error('rolled back');
+          order.push('commit');
+          return result;
+        })) as never);
+      return order;
+    }
+
+    it('runs a hook after the transaction commits, not before', async () => {
+      const service = new PrismaService();
+      const order = transactionLog(service);
+
+      await service.runInTransaction(async () => {
+        service.onCommit(() => order.push('hook'));
+        order.push('work');
+      });
+
+      expect(order).toEqual(['work', 'commit', 'hook']);
+    });
+
+    it('drops the hooks when the transaction fails', async () => {
+      const service = new PrismaService();
+      const hook = jest.fn();
+      transactionLog(service, true);
+
+      await expect(service.runInTransaction(async () => service.onCommit(hook))).rejects.toThrow(
+        'rolled back',
+      );
+
+      expect(hook).not.toHaveBeenCalled();
+    });
+
+    it('runs the hook right away when there is no transaction', () => {
+      const hook = jest.fn();
+
+      new PrismaService().onCommit(hook);
+
+      expect(hook).toHaveBeenCalledTimes(1);
+    });
+
+    it('does not fail an already committed operation when a hook throws', async () => {
+      const service = new PrismaService();
+      transactionLog(service);
+
+      const result = service.runInTransaction(async () => {
+        service.onCommit(() => {
+          throw new Error('hook failed');
+        });
+        return 'committed';
+      });
+
+      await expect(result).resolves.toBe('committed');
+    });
+  });
+
   it('connects and disconnects with the Nest lifecycle', async () => {
     const service = new PrismaService();
     const connect = jest.spyOn(service.client, '$connect').mockResolvedValue();

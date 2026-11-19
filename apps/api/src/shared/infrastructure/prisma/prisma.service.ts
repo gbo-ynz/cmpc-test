@@ -1,5 +1,5 @@
 import { AsyncLocalStorage } from 'node:async_hooks';
-import { Injectable, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 
 /**
@@ -11,6 +11,8 @@ import { Prisma, PrismaClient } from '@prisma/client';
 export class PrismaService implements OnModuleInit, OnModuleDestroy {
   readonly client = new PrismaClient();
   private readonly transactionStore = new AsyncLocalStorage<Prisma.TransactionClient>();
+  private readonly commitHooks = new AsyncLocalStorage<Array<() => void>>();
+  private readonly logger = new Logger(PrismaService.name);
 
   /** Transaction-aware client: repositories must always query through `db`. */
   get db(): Prisma.TransactionClient {
@@ -25,8 +27,34 @@ export class PrismaService implements OnModuleInit, OnModuleDestroy {
     await this.client.$disconnect();
   }
 
-  runInTransaction<T>(work: () => Promise<T>): Promise<T> {
+  /**
+   * Runs `hook` once the surrounding transaction has committed, or right away outside one, so
+   * side effects such as logs never describe work that was rolled back.
+   */
+  onCommit(hook: () => void): void {
+    const hooks = this.commitHooks.getStore();
+    if (hooks) hooks.push(hook);
+    else hook();
+  }
+
+  async runInTransaction<T>(work: () => Promise<T>): Promise<T> {
     if (this.transactionStore.getStore()) return work();
-    return this.client.$transaction((tx) => this.transactionStore.run(tx, work));
+    const hooks: Array<() => void> = [];
+    const result = await this.client.$transaction((tx) =>
+      this.transactionStore.run(tx, () => this.commitHooks.run(hooks, work)),
+    );
+    this.flush(hooks);
+    return result;
+  }
+
+  /** The work is already committed: a failing hook is reported, never turned into a failure. */
+  private flush(hooks: ReadonlyArray<() => void>): void {
+    for (const hook of hooks) {
+      try {
+        hook();
+      } catch (error) {
+        this.logger.error('Post-commit hook failed', error instanceof Error ? error.stack : error);
+      }
+    }
   }
 }
