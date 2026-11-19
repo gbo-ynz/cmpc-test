@@ -1,13 +1,16 @@
-export type AuditAction =
-  | 'CREATE'
-  | 'UPDATE'
-  | 'DELETE'
-  | 'UPLOAD_IMAGE'
-  | 'EXPORT'
-  | 'LOGIN'
-  | 'LOGIN_FAILED'
-  | 'COMPLETE'
-  | 'CANCEL';
+export const AUDIT_ACTIONS = [
+  'CREATE',
+  'UPDATE',
+  'DELETE',
+  'UPLOAD_IMAGE',
+  'EXPORT',
+  'LOGIN',
+  'LOGIN_FAILED',
+  'COMPLETE',
+  'CANCEL',
+] as const;
+
+export type AuditAction = (typeof AUDIT_ACTIONS)[number];
 
 export interface AuditEntry {
   readonly action: AuditAction;

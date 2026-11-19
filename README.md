@@ -390,6 +390,7 @@ Todas las respuestas usan el mismo formato: `{ success: true, data, meta? }` o
 | GET · POST            | `/api/sales?status=&page=1&limit=10` · `/api/sales/:id`                                                     | Ventas paginadas con filtro por estado, crear una venta pendiente   |
 | POST                  | `/api/sales/:id/complete` · `/api/sales/:id/cancel`                                                         | Completar (descuenta stock, exige método de pago) o cancelar        |
 | GET                   | `/api/dashboard`                                                                                            | Cifras principales; el administrador recibe además `administration` |
+| GET                   | `/api/audit-logs?action=&entityType=&entityId=&userId=&from=&to=&page=1&limit=10`                           | Auditoría paginada con filtros (solo administrador, solo lectura)   |
 | GET                   | `/api/health`                                                                                               | Estado del servicio + chequeo de BD (público)                       |
 
 Contrato completo con esquemas y ejemplos: Swagger en http://localhost:3000/api/docs.
@@ -527,6 +528,8 @@ npm run test:int       # requiere Docker en ejecución; no forma parte del pre-p
 | `sales-indexes.int-spec`               | El listado de ventas y el filtro "libros con stock" usan sus índices compuestos (planes con `EXPLAIN`)                                                                             |
 | `prisma-sale-stock.int-spec`           | Dos descuentos simultáneos sobre el último ejemplar: solo uno se aplica; si una línea no tiene stock, se revierte toda la venta                                                    |
 | `prisma-dashboard.repository.int-spec` | Cifras del dashboard: libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` en pesos enteros                                   |
+| `prisma-audit-log.repository.int-spec` | Consulta de la auditoría: orden, actor, filtros por entidad, usuario y fechas, y paginación en el servidor                                                                         |
+| `audit-logs-append-only.int-spec`      | La base rechaza `UPDATE` y `DELETE` sobre `audit_logs`, pero permite que la FK desvincule al autor al borrar un usuario                                                            |
 | `prisma-book.repository.int-spec`      | Un libro con el mismo título (sin importar mayúsculas), autor y editorial se detecta, y el índice único lo rechaza aunque se saltee la verificación; uno eliminado no bloquea      |
 | `prisma-*.repository.int-spec` (resto) | Autores, editoriales, géneros, usuarios y ventas: orden, paginación, mayúsculas y reglas de borrado                                                                                |
 
