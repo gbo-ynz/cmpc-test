@@ -34,9 +34,9 @@ export const setQuantity = (
 export const removeLine = (lines: readonly DraftLine[], bookId: string): DraftLine[] =>
   lines.filter((line) => line.bookId !== bookId);
 
-/** Cents avoid floating point drift, like the API does. */
+/** Whole pesos (CLP): integer arithmetic keeps the total exact, like the API. */
 export const draftTotal = (lines: readonly DraftLine[]): number =>
-  lines.reduce((cents, line) => cents + Math.round(line.unitPrice * 100) * line.quantity, 0) / 100;
+  lines.reduce((total, line) => total + line.unitPrice * line.quantity, 0);
 
 export const toSaleInput = (lines: readonly DraftLine[]): SaleLineInput[] =>
   lines.map(({ bookId, quantity }) => ({ bookId, quantity }));

@@ -36,7 +36,7 @@ export class FakeDashboardRepository extends DashboardRepository {
 
   async inventoryValue(): Promise<number> {
     this.calls.push('inventoryValue');
-    return 987650.5;
+    return 987650;
   }
 
   async catalogStats(): Promise<CatalogStats> {

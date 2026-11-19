@@ -7,7 +7,7 @@ import {
   type DraftLine,
 } from './sale-draft';
 
-const RAYUELA = { id: 'b1', title: 'Rayuela', price: 16990.5, stock: 3 };
+const RAYUELA = { id: 'b1', title: 'Rayuela', price: 16990, stock: 3 };
 const FICCIONES = { id: 'b2', title: 'Ficciones', price: 9990, stock: 1 };
 
 describe('sale draft', () => {
@@ -17,7 +17,7 @@ describe('sale draft', () => {
     lines = addToDraft(addToDraft(lines, RAYUELA), RAYUELA);
 
     expect(lines).toHaveLength(1);
-    expect(lines[0]).toMatchObject({ bookId: 'b1', unitPrice: 16990.5, stock: 3, quantity: 3 });
+    expect(lines[0]).toMatchObject({ bookId: 'b1', unitPrice: 16990, stock: 3, quantity: 3 });
   });
 
   it('keeps the quantity between 1 and the stock', () => {
@@ -37,10 +37,10 @@ describe('sale draft', () => {
     expect(lines).toHaveLength(2);
   });
 
-  it('adds the total in cents and sends only book and quantity', () => {
+  it('adds the total in whole pesos and sends only book and quantity', () => {
     const lines = setQuantity(addToDraft(addToDraft([], RAYUELA), FICCIONES), 'b1', 3);
 
-    expect(draftTotal(lines)).toBe(60961.5);
+    expect(draftTotal(lines)).toBe(60960);
     expect(draftTotal([])).toBe(0);
     expect(toSaleInput(lines)).toEqual([
       { bookId: 'b1', quantity: 3 },

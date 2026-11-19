@@ -6,7 +6,7 @@ import { BookRecord, toDomain, toPersistence } from './book.mapper';
 const RECORD: BookRecord = {
   id: '0b6d3c39-5b1f-4c9e-9a59-0b1f6b9c0001',
   title: 'Rayuela',
-  price: new Prisma.Decimal('16990.50'),
+  price: new Prisma.Decimal('16990.00'),
   stock: 3,
   imageUrl: null,
   authorId: 'a1',
@@ -30,7 +30,7 @@ describe('book mapper', () => {
       genre: { name: 'Novela' },
       stock: 3,
     });
-    expect(snapshot.price.amount).toBe(16990.5);
+    expect(snapshot.price.amount).toBe(16990);
   });
 
   it('maps the aggregate to a write model that only connects existing catalog records', () => {

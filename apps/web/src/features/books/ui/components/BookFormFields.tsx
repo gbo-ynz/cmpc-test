@@ -39,9 +39,9 @@ export function BookFormFields({ register, errors, options }: BookFormFieldsProp
       <TextField
         label="Precio (CLP)"
         type="number"
-        step="0.01"
+        step="1"
         min="0"
-        inputMode="decimal"
+        inputMode="numeric"
         error={errors.price?.message}
         {...register('price', { valueAsNumber: true })}
       />

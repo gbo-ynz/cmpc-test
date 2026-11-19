@@ -1,32 +1,34 @@
 import { InvalidBookError } from './book.errors';
 
-// Matches the DECIMAL(12,2) column: 10 integer digits + 2 decimals.
-const MAX_PRICE = 9_999_999_999.99;
-const TWO_DECIMALS = /^\d+(\.\d{1,2})?$/;
+/** Ten integer digits, the integer part of the DECIMAL(12,2) column. */
+export const MAX_PRICE = 9_999_999_999;
 
-/** Value object: money is stored in cents to avoid floating point drift. */
+/**
+ * Value object: a price in whole Chilean pesos (CLP has no decimals in practice). Integers keep
+ * money exact; the column stays DECIMAL(12,2) and simply stores 16990 as 16990.00.
+ */
 export class Price {
-  private constructor(private readonly cents: number) {}
+  private constructor(private readonly pesos: number) {}
 
   static of(amount: number): Price {
     if (!Number.isFinite(amount) || amount < 0 || amount > MAX_PRICE) {
       throw new InvalidBookError(`price must be between 0 and ${MAX_PRICE}`);
     }
-    if (!TWO_DECIMALS.test(String(amount))) {
-      throw new InvalidBookError('price must have at most 2 decimals');
+    if (!Number.isInteger(amount)) {
+      throw new InvalidBookError('price must be a whole number of pesos (CLP has no decimals)');
     }
-    return new Price(Math.round(amount * 100));
+    return new Price(amount);
   }
 
   get amount(): number {
-    return this.cents / 100;
+    return this.pesos;
   }
 
   toDecimalString(): string {
-    return this.amount.toFixed(2);
+    return this.pesos.toFixed(2);
   }
 
   equals(other: Price): boolean {
-    return this.cents === other.cents;
+    return this.pesos === other.pesos;
   }
 }

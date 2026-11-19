@@ -25,7 +25,7 @@ export async function seedDashboardData(prisma: PrismaClient): Promise<void> {
       data: { title, genreId, price, stock, deletedAt: gone ? new Date() : null, ...refs },
     });
   await Promise.all([
-    book('A', novela.id, 1000.5, 2),
+    book('A', novela.id, 1000, 2),
     book('B', novela.id, 500, 0),
     book('C', ensayo.id, 2000, 1),
     book('D', novela.id, 9999, 5, true),
@@ -41,7 +41,7 @@ export async function seedDashboardData(prisma: PrismaClient): Promise<void> {
   await Promise.all([
     sale('PENDING', 1),
     sale('PENDING', 2),
-    sale('COMPLETED', 1000.5),
+    sale('COMPLETED', 1000),
     sale('COMPLETED', 2500),
     sale('CANCELLED', 9000),
   ]);

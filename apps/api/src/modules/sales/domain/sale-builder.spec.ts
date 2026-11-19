@@ -2,11 +2,11 @@ import { buildSale } from './sale-builder';
 import type { SellableBook } from './sale';
 import { InvalidSaleError } from './sale.errors';
 
-const RAYUELA: SellableBook = { id: 'b1', title: 'Rayuela', price: 16990.5, stock: 5 };
+const RAYUELA: SellableBook = { id: 'b1', title: 'Rayuela', price: 16990, stock: 5 };
 const FICCIONES: SellableBook = { id: 'b2', title: 'Ficciones', price: 9990, stock: 2 };
 
 describe('buildSale', () => {
-  it('snapshots each unit price and adds the total without floating point drift', () => {
+  it('snapshots each unit price and adds the total exactly, in whole pesos', () => {
     const sale = buildSale(
       'u1',
       [
@@ -17,10 +17,10 @@ describe('buildSale', () => {
     );
 
     expect(sale.items).toEqual([
-      { bookId: 'b1', quantity: 3, unitPrice: 16990.5 },
+      { bookId: 'b1', quantity: 3, unitPrice: 16990 },
       { bookId: 'b2', quantity: 2, unitPrice: 9990 },
     ]);
-    expect(sale.total).toBe(70951.5);
+    expect(sale.total).toBe(70950);
     expect(sale.createdById).toBe('u1');
   });
 

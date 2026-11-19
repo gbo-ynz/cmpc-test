@@ -10,7 +10,7 @@ const VIEW: BookView = {
   publisher: 'Editorial',
   genreId: 'g1',
   genre: 'Novela',
-  price: 1990.5,
+  price: 1990,
   stock: 3,
   isAvailable: true,
   imageUrl: null,
@@ -27,7 +27,7 @@ describe('book CSV serializer', () => {
 
   it('quotes values containing separators or quotes', () => {
     expect(bookToCsvLine(VIEW)).toBe(
-      'b1,"Hello, ""World""",Autor,Editorial,Novela,1990.5,3,Sí,2026-01-01T00:00:00.000Z\r\n',
+      'b1,"Hello, ""World""",Autor,Editorial,Novela,1990,3,Sí,2026-01-01T00:00:00.000Z\r\n',
     );
   });
 

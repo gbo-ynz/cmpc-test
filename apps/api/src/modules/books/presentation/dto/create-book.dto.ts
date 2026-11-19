@@ -1,18 +1,8 @@
 import { ApiProperty } from '@nestjs/swagger';
-import {
-  IsInt,
-  IsNotEmpty,
-  IsNumber,
-  IsString,
-  IsUUID,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsInt, IsNotEmpty, IsString, IsUUID, Max, MaxLength, Min } from 'class-validator';
 import type { BookInput } from '../../application/book-input';
+import { MAX_PRICE } from '../../domain/price';
 import { BOOK_LIMITS } from '../../domain/book-data';
-
-const MAX_PRICE = 9_999_999_999.99;
 
 export class CreateBookDto implements BookInput {
   @ApiProperty({ example: 'Rayuela', maxLength: BOOK_LIMITS.title })
@@ -33,8 +23,13 @@ export class CreateBookDto implements BookInput {
   @IsUUID()
   genreId: string;
 
-  @ApiProperty({ example: 16990, minimum: 0 })
-  @IsNumber({ maxDecimalPlaces: 2, allowNaN: false, allowInfinity: false })
+  @ApiProperty({
+    example: 16990,
+    minimum: 0,
+    maximum: MAX_PRICE,
+    description: 'Whole Chilean pesos (CLP)',
+  })
+  @IsInt({ message: 'price must be a whole number of pesos (CLP has no decimals)' })
   @Min(0)
   @Max(MAX_PRICE)
   price: number;

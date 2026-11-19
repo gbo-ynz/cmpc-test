@@ -6,8 +6,6 @@ export interface RequestedLine {
   readonly quantity: number;
 }
 
-const toCents = (amount: number): number => Math.round(amount * 100);
-
 /** Validates the lines against the books and snapshots the prices (RF-16 CA-1 and CA-3). */
 export function buildSale(
   createdById: string,
@@ -17,7 +15,8 @@ export function buildSale(
   if (lines.length === 0) throw new InvalidSaleError('A sale needs at least one line');
   const bookById = new Map(books.map((book) => [book.id, book]));
   const seen = new Set<string>();
-  let totalCents = 0;
+  // Whole pesos (CLP): integer arithmetic, so the total is exact.
+  let total = 0;
   const items = lines.map(({ bookId, quantity }) => {
     if (seen.has(bookId)) throw new InvalidSaleError('A book cannot appear in two lines');
     seen.add(bookId);
@@ -29,8 +28,8 @@ export function buildSale(
     if (quantity > book.stock) {
       throw new InvalidSaleError(`Only ${book.stock} unit(s) of "${book.title}" in stock`);
     }
-    totalCents += toCents(book.price) * quantity;
+    total += book.price * quantity;
     return { bookId, quantity, unitPrice: book.price };
   });
-  return { createdById, items, total: totalCents / 100 };
+  return { createdById, items, total };
 }

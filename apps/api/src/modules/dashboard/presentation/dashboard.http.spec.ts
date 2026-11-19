@@ -46,7 +46,7 @@ describe('GET /dashboard', () => {
     const { body } = await get(ADMIN);
 
     expect(body.data.administration).toMatchObject({
-      inventoryValue: 987650.5,
+      inventoryValue: 987650,
       catalog: { authors: 8, publishers: 6, genres: 4, users: 3 },
     });
     expect(body.data.administration.recentActivity[0]).toMatchObject({

@@ -32,15 +32,15 @@ it('counts active books per genre, most first, leaving out genres without books'
   ]);
 });
 
-it('values only the available, active inventory: price x stock, with decimals', async () => {
-  expect(await repository.inventoryValue()).toBe(4001); // 1000.50 x 2 + 2000 x 1
+it('values only the available, active inventory: price x stock in whole pesos', async () => {
+  expect(await repository.inventoryValue()).toBe(4000); // 1000 x 2 + 2000 x 1
 });
 
 it('counts pending sales and adds up only the completed ones', async () => {
   expect(await repository.salesStats()).toEqual({
     pending: 2,
     completed: 2,
-    completedAmount: 3500.5,
+    completedAmount: 3500,
   });
 });
 

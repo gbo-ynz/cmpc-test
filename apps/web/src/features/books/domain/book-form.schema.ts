@@ -1,8 +1,8 @@
 import { z } from 'zod';
 
-const MAX_PRICE = 9_999_999_999.99;
+// Whole Chilean pesos (CLP has no decimals); same limit as the API.
+const MAX_PRICE = 9_999_999_999;
 const MAX_STOCK = 1_000_000;
-const TWO_DECIMALS = /^\d+(\.\d{1,2})?$/;
 export const MAX_IMAGE_BYTES = 2 * 1024 * 1024;
 export const ACCEPTED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
 
@@ -23,7 +23,7 @@ export const bookFormSchema = z.object({
     .number({ invalid_type_error: 'Ingrese el precio' })
     .min(0, 'El precio no puede ser negativo')
     .max(MAX_PRICE, 'El precio es demasiado alto')
-    .refine((value) => TWO_DECIMALS.test(String(value)), 'Use como máximo 2 decimales'),
+    .int('Ingrese el precio en pesos, sin decimales'),
   stock: z
     .number({ invalid_type_error: 'Ingrese el stock' })
     .int('El stock debe ser un número entero')

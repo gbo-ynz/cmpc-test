@@ -27,7 +27,7 @@ describe('GetDashboardUseCase', () => {
 
     expect(dashboard.books.active).toBe(5);
     expect(dashboard.administration).toEqual({
-      inventoryValue: 987650.5,
+      inventoryValue: 987650,
       catalog: { authors: 8, publishers: 6, genres: 4, users: 3 },
       recentActivity: [expect.objectContaining({ action: 'CREATE', label: 'Rayuela' })],
     });

@@ -14,7 +14,7 @@ export async function startSalesDatabase() {
     genreId: (await db.prisma.genre.create({ data: { name: 'G' } })).id,
   };
   const addBook = (title: string, stock: number, deletedAt: Date | null = null) =>
-    db.prisma.book.create({ data: { title, price: 1000.5, stock, deletedAt, ...refs } });
+    db.prisma.book.create({ data: { title, price: 1000, stock, deletedAt, ...refs } });
   const stop = async () => {
     await prisma.onModuleDestroy();
     await db.stop();

@@ -41,10 +41,10 @@ it('rolls everything back when a later line has no stock: nothing is discounted'
   const plenty = await env.addBook('Con stock', 5);
   const short = await env.addBook('Sin stock', 1);
   const lines = [
-    { bookId: plenty.id, quantity: 2, unitPrice: 1000.5 },
-    { bookId: short.id, quantity: 1, unitPrice: 1000.5 },
+    { bookId: plenty.id, quantity: 2, unitPrice: 1000 },
+    { bookId: short.id, quantity: 1, unitPrice: 1000 },
   ];
-  const sale = await sales.create({ createdById: env.userId, total: 3001.5, items: lines });
+  const sale = await sales.create({ createdById: env.userId, total: 3000, items: lines });
   await env.db.prisma.book.update({ where: { id: short.id }, data: { stock: 0 } });
   const transactions = new PrismaTransactionManager(env.prisma);
   const complete = new CompleteSaleUseCase(sales, stock, transactions, new FakeAuditLogger());

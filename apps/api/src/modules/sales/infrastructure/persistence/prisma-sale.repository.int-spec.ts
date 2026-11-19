@@ -15,8 +15,8 @@ afterAll(() => env.stop());
 const newSale = (...lines: Array<{ bookId: string; quantity: number }>) =>
   sales.create({
     createdById: env.userId,
-    total: 1000.5 * lines.reduce((sum, line) => sum + line.quantity, 0),
-    items: lines.map((line) => ({ ...line, unitPrice: 1000.5 })),
+    total: 1000 * lines.reduce((sum, line) => sum + line.quantity, 0),
+    items: lines.map((line) => ({ ...line, unitPrice: 1000 })),
   });
 
 it('creates a pending sale and reads it back with its lines and creator', async () => {
@@ -25,9 +25,9 @@ it('creates a pending sale and reads it back with its lines and creator', async 
   const created = await newSale({ bookId: book.id, quantity: 2 });
   const found = await sales.findById(created.id);
 
-  expect(found).toMatchObject({ status: 'PENDING', total: 2001, createdBy: { name: 'Vendedora' } });
+  expect(found).toMatchObject({ status: 'PENDING', total: 2000, createdBy: { name: 'Vendedora' } });
   expect(found?.items).toEqual([
-    { bookId: book.id, title: 'Rayuela', quantity: 2, unitPrice: 1000.5 },
+    { bookId: book.id, title: 'Rayuela', quantity: 2, unitPrice: 1000 },
   ]);
 });
 

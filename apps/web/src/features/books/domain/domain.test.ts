@@ -39,7 +39,7 @@ describe('bookFormSchema', () => {
     authorId: 'a1',
     publisherId: 'p1',
     genreId: 'g1',
-    price: 19.99,
+    price: 16990,
     stock: 4,
   };
 
@@ -51,7 +51,7 @@ describe('bookFormSchema', () => {
     [{ title: '   ' }, 'Ingrese el título'],
     [{ price: Number.NaN }, 'Ingrese el precio'],
     [{ price: -1 }, 'El precio no puede ser negativo'],
-    [{ price: 1.999 }, 'Use como máximo 2 decimales'],
+    [{ price: 16990.5 }, 'Ingrese el precio en pesos, sin decimales'],
     [{ title: 'x'.repeat(256) }, 'Máximo 255 caracteres'],
     [{ genreId: '' }, 'Seleccione el género'],
     [{ stock: -1 }, 'El stock no puede ser negativo'],
