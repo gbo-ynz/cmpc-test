@@ -300,7 +300,12 @@ img {
 /* Filters + table */
 .filters {
   display: grid;
-  grid-template-columns: 2fr repeat(4, 1fr) auto;
+  /* Each select is wide enough for its longest placeholder ("Todas las editoriales"). */
+  grid-template-columns:
+    minmax(200px, 1.5fr)
+    repeat(3, minmax(195px, 1fr))
+    minmax(140px, 0.8fr)
+    auto;
   gap: 12px;
   align-items: end;
   padding: var(--space);
@@ -538,6 +543,7 @@ a.icon-button {
   border-radius: 999px;
   font-size: 0.8rem;
   font-weight: 600;
+  white-space: nowrap;
 }
 .badge--success {
   background: var(--color-success-soft);
@@ -688,6 +694,15 @@ a.icon-button {
   width: 96px;
   height: auto;
   margin-bottom: 8px;
+}
+
+@media (max-width: 1200px) {
+  .filters {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .filters > :first-child {
+    grid-column: 1 / -1;
+  }
 }
 
 @media (max-width: 900px) {
