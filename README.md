@@ -468,10 +468,10 @@ docs/
 
 Hay dos niveles, con propósitos distintos:
 
-| Nivel                | Qué registra                                                                                                                                                            | Dónde se ve                                                                      |
-| -------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
-| Auditoría de negocio | Quién hizo qué y cuándo: `LOGIN`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE`, `EXPORT`, `COMPLETE`, `CANCEL`, con la entidad afectada y metadatos (nunca contraseñas) | Tabla `audit_logs` (ver [Acceso a la base de datos](#acceso-a-la-base-de-datos)) |
-| Logging técnico      | Cada petición HTTP (método, ruta, código de estado y latencia) y los errores con su contexto                                                                            | `docker compose logs -f api` (stdout)                                            |
+| Nivel                | Qué registra                                                                                                                                                                                                                                       | Dónde se ve                                                                      |
+| -------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------- |
+| Auditoría de negocio | Quién hizo qué y cuándo: `LOGIN`, `LOGIN_FAILED`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE`, `EXPORT`, `COMPLETE`, `CANCEL`, con la entidad afectada y metadatos (nunca contraseñas); las ediciones guardan los valores nuevos y los anteriores | Tabla `audit_logs` (ver [Acceso a la base de datos](#acceso-a-la-base-de-datos)) |
+| Logging técnico      | Cada petición HTTP (método, ruta, código de estado y latencia) y los errores con su contexto                                                                                                                                                       | `docker compose logs -f api` (stdout)                                            |
 
 La auditoría de los cambios se escribe dentro de la misma transacción que la operación: si una falla,
 ninguna de las dos se guarda. Los errores 5xx se registran completos en el log, pero al cliente solo se le

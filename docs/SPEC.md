@@ -182,12 +182,12 @@ portada opcional y fechas de alta, actualización y eliminación lógica.
 
 ### RB-06 · Logging para auditoría de operaciones ✅
 
-| CA  | Criterio de aceptación                                                                                               | Verificado por                                                                                                                  |
-| --- | -------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
-| 1   | Se auditan `LOGIN`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE` y `EXPORT`, con usuario, entidad, metadatos y fecha | API `login.use-case.spec.ts`, `book-commands.spec.ts`, `upload-book-image.use-case.spec.ts`, `book-queries.spec.ts`             |
-| 2   | La auditoría de un cambio se escribe en la misma transacción: no hay cambio sin registro ni registro sin cambio      | API `book-commands.spec.ts` › "persists the book and audits inside one transaction", "does not persist nor audit invalid books" |
-| 3   | Cada petición HTTP se registra con método, ruta, estado y latencia                                                   | API `request-logging.interceptor.spec.ts` (3 tests)                                                                             |
-| 4   | Los errores 5xx se registran con su stack trace                                                                      | API `all-exceptions.filter.spec.ts` › "logs server errors with their stack trace"                                               |
+| CA  | Criterio de aceptación                                                                                                                                                                   | Verificado por                                                                                                                  |
+| --- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- |
+| 1   | Se auditan `LOGIN`, `LOGIN_FAILED`, `CREATE`, `UPDATE`, `DELETE`, `UPLOAD_IMAGE` y `EXPORT`, con usuario, entidad, metadatos y fecha; las ediciones guardan el valor nuevo y el anterior | API `login.use-case.spec.ts`, `book-commands.spec.ts`, `upload-book-image.use-case.spec.ts`, `book-queries.spec.ts`             |
+| 2   | La auditoría de un cambio se escribe en la misma transacción: no hay cambio sin registro ni registro sin cambio                                                                          | API `book-commands.spec.ts` › "persists the book and audits inside one transaction", "does not persist nor audit invalid books" |
+| 3   | Cada petición HTTP se registra con método, ruta, estado y latencia                                                                                                                       | API `request-logging.interceptor.spec.ts` (3 tests)                                                                             |
+| 4   | Los errores 5xx se registran con su stack trace                                                                                                                                          | API `all-exceptions.filter.spec.ts` › "logs server errors with their stack trace"                                               |
 
 ---
 

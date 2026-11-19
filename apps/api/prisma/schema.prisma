@@ -28,6 +28,7 @@ enum AuditAction {
   UPLOAD_IMAGE
   EXPORT
   LOGIN
+  LOGIN_FAILED
   COMPLETE
   CANCEL
 }

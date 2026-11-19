@@ -6,7 +6,9 @@ import { AppModule } from '../app.module';
 import { configureApp } from '../bootstrap/app.setup';
 import type { User, UserRepository } from '../modules/auth/domain/user';
 import { UserRepository as UserRepositoryToken } from '../modules/auth/domain/user';
+import { AuditLogger } from '../shared/application/audit-logger.port';
 import { PrismaService } from '../shared/infrastructure/prisma/prisma.service';
+import { FakeAuditLogger } from './fakes';
 
 export const ADMIN: User = {
   id: 'admin-1',
@@ -48,7 +50,10 @@ export async function createHttpApp(
     .overrideProvider(PrismaService)
     .useValue(prisma)
     .overrideProvider(UserRepositoryToken)
-    .useValue(users);
+    .useValue(users)
+    // A failed login is audited too, so even specs that never touch the database need one.
+    .overrideProvider(AuditLogger)
+    .useValue(new FakeAuditLogger());
   for (const { provide, useValue } of overrides) {
     builder = builder.overrideProvider(provide).useValue(useValue);
   }

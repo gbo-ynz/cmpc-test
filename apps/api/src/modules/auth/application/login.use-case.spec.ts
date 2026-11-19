@@ -50,6 +50,47 @@ describe('LoginUseCase', () => {
     );
   });
 
+  it('audits a wrong password against the targeted user, without attributing it to them', async () => {
+    const { useCase, audit } = setup(ADMIN, false);
+
+    await expect(
+      useCase.execute({ email: ' ADMIN@cmpc.cl ', password: 'bad-pass' }),
+    ).rejects.toThrow(InvalidCredentialsError);
+
+    expect(audit.entries).toEqual([
+      {
+        action: 'LOGIN_FAILED',
+        entityType: 'User',
+        entityId: 'user-1',
+        metadata: { email: 'admin@cmpc.cl', reason: 'WRONG_PASSWORD' },
+      },
+    ]);
+  });
+
+  it('audits an unknown email without an entity id', async () => {
+    const { useCase, audit } = setup(null, false);
+
+    await expect(
+      useCase.execute({ email: 'ghost@cmpc.cl', password: 'whatever1' }),
+    ).rejects.toThrow(InvalidCredentialsError);
+
+    expect(audit.entries).toEqual([
+      {
+        action: 'LOGIN_FAILED',
+        entityType: 'User',
+        metadata: { email: 'ghost@cmpc.cl', reason: 'UNKNOWN_EMAIL' },
+      },
+    ]);
+  });
+
+  it('never writes the password into the audit trail', async () => {
+    const { useCase, audit } = setup(ADMIN, false);
+
+    await useCase.execute({ email: ADMIN.email, password: 'S3cret-pass' }).catch(() => undefined);
+
+    expect(JSON.stringify(audit.entries)).not.toContain('S3cret-pass');
+  });
+
   it('still verifies a password when the user does not exist (timing safe)', async () => {
     const { useCase, hasher } = setup(null, true);
 

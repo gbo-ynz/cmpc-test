@@ -55,3 +55,10 @@ it('creates the sales tables and the new audit actions', async () => {
   expect(tables.map((row) => row.table_name)).toEqual(['sale_items', 'sales']);
   expect(actions.map((row) => row.action)).toEqual(expect.arrayContaining(['COMPLETE', 'CANCEL']));
 });
+
+it('records failed sign-ins as their own audit action', async () => {
+  const actions = await db.prisma.$queryRaw<Array<{ action: string }>>`
+    SELECT unnest(enum_range(NULL::"AuditAction"))::text AS action`;
+
+  expect(actions.map((row) => row.action)).toContain('LOGIN_FAILED');
+});

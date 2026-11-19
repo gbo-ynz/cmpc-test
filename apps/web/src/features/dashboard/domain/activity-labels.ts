@@ -32,6 +32,7 @@ const PLURALS: Record<string, string> = {
 export function describeActivity(action: string, entityType: string): string {
   const entity = ENTITIES[entityType] ?? entityType;
   if (action === 'LOGIN') return 'Inició sesión';
+  if (action === 'LOGIN_FAILED') return 'Intento fallido de inicio de sesión';
   if (action === 'EXPORT') return `Exportó ${PLURALS[entity] ?? entity}`;
   return `${ACTIONS[action] ?? action} ${entity}`;
 }

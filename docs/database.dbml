@@ -11,6 +11,7 @@ Enum audit_action {
   UPDATE
   DELETE
   UPLOAD_IMAGE
+  LOGIN_FAILED
   EXPORT
   LOGIN
   COMPLETE

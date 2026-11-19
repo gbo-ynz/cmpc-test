@@ -144,6 +144,7 @@ describe('describeActivity', () => {
     expect(describeActivity('UPLOAD_IMAGE', 'Book')).toBe('Subió la portada del libro');
     expect(describeActivity('EXPORT', 'Author')).toBe('Exportó autores');
     expect(describeActivity('LOGIN', 'User')).toBe('Inició sesión');
+    expect(describeActivity('LOGIN_FAILED', 'User')).toBe('Intento fallido de inicio de sesión');
   });
 
   it('keeps unknown actions and entities visible instead of hiding them', () => {
