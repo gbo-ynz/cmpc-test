@@ -38,15 +38,15 @@ criterios están en ✅ (ver [Brechas cerradas](#brechas-cerradas)).
 Un **libro** tiene: título, autor, editorial, género, precio y disponibilidad (enunciado), más imagen de
 portada opcional y fechas de alta, actualización y eliminación lógica.
 
-| Campo        | Regla                                                                         |
-| ------------ | ----------------------------------------------------------------------------- |
-| Título       | Obligatorio, 1–255 caracteres (se recortan espacios)                          |
-| Autor        | Obligatorio, 1–160 caracteres; se normaliza en `authors`                      |
-| Editorial    | Obligatoria, 1–160 caracteres; se normaliza en `publishers`                   |
-| Género       | Obligatorio, 1–80 caracteres; se normaliza en `genres`                        |
-| Precio (CLP) | 0 a 9.999.999.999,99; máximo 2 decimales; sin flotantes (`Price` en centavos) |
-| Disponible   | Booleano                                                                      |
-| Portada      | Opcional; JPEG, PNG o WEBP; máximo 2 MB                                       |
+| Campo        | Regla                                                                                                                 |
+| ------------ | --------------------------------------------------------------------------------------------------------------------- |
+| Título       | Obligatorio, 1–255 caracteres (se recortan espacios)                                                                  |
+| Autor        | Obligatorio, 1–160 caracteres; se normaliza en `authors`                                                              |
+| Editorial    | Obligatoria, 1–160 caracteres; se normaliza en `publishers`                                                           |
+| Género       | Obligatorio, 1–80 caracteres; se normaliza en `genres`                                                                |
+| Precio (CLP) | pesos chilenos **enteros**, de 0 a 9.999.999.999 (el peso no usa decimales); `Price` opera con enteros, sin flotantes |
+| Disponible   | Booleano                                                                                                              |
+| Portada      | Opcional; JPEG, PNG o WEBP; máximo 2 MB                                                                               |
 
 ---
 
@@ -294,7 +294,7 @@ Requisitos agregados después del enunciado (no forman parte de la prueba origin
 
 ### RF-09 · Dashboard por perfil ✅
 
-Verificado por: API `get-dashboard.use-case.spec.ts` (un usuario no consulta los datos de administración), `dashboard.http.spec.ts` (401, y la respuesta de un usuario no contiene `administration`); INT `prisma-dashboard.repository.int-spec.ts` (libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` con decimales; orden de la auditoría); WEB `dashboard.test.tsx`, `dashboard.api.test.ts`, `auth.test.tsx` (destino tras el login y menú); E2E `dashboard.spec.ts`, `admin.spec.ts`.
+Verificado por: API `get-dashboard.use-case.spec.ts` (un usuario no consulta los datos de administración), `dashboard.http.spec.ts` (401, y la respuesta de un usuario no contiene `administration`); INT `prisma-dashboard.repository.int-spec.ts` (libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` en pesos enteros; orden de la auditoría); WEB `dashboard.test.tsx`, `dashboard.api.test.ts`, `auth.test.tsx` (destino tras el login y menú); E2E `dashboard.spec.ts`, `admin.spec.ts`.
 
 | CA  | Criterio de aceptación                                                                                                                                                                                                                                              |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -401,7 +401,7 @@ Verificado por: API `catalog-csv.spec.ts`, `export-catalog-csv.use-cases.spec.ts
 
 ### RF-16 · Ventas ✅
 
-Verificado por: API `sale-builder.spec.ts` (snapshot de precios, total en centavos, líneas repetidas, libros inactivos, cantidad ≤ stock), `sales.spec.ts`, `sales.http.spec.ts` (permisos, 201/400/404, paginación y filtro por estado); INT `prisma-sale.repository.int-spec.ts`; WEB `sales.test.tsx` (listado, filtro, nueva venta con cantidad limitada por stock), `sale-draft.test.ts`, `sales.api.test.ts`; E2E `sales.spec.ts`.
+Verificado por: API `sale-builder.spec.ts` (snapshot de precios, total exacto en pesos enteros, líneas repetidas, libros inactivos, cantidad ≤ stock), `sales.spec.ts`, `sales.http.spec.ts` (permisos, 201/400/404, paginación y filtro por estado); INT `prisma-sale.repository.int-spec.ts`; WEB `sales.test.tsx` (listado, filtro, nueva venta con cantidad limitada por stock), `sale-draft.test.ts`, `sales.api.test.ts`; E2E `sales.spec.ts`.
 
 | CA  | Criterio de aceptación                                                                                                                                                                                                                           |
 | --- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
@@ -453,7 +453,7 @@ Verificado por: API `sales.spec.ts` (descuento por línea, venta final, stock in
 
 - La disponibilidad pasa a derivarse del stock (RF-15); durante la transición se mantienen sincronizados.
 - Un libro tiene exactamente un autor, una editorial y un género.
-- Los precios están en CLP con hasta 2 decimales.
+- Los precios son en pesos chilenos (CLP) **enteros**: el peso no usa decimales, así que la API y el formulario rechazan, por ejemplo, 16990,5.
 - Dos perfiles: administrador (`ADMIN`) y usuario (`USER`); ver la matriz de permisos de la ampliación.
 - No hay autorregistro: el enunciado pide solo login, y las cuentas las crean los administradores desde la pantalla de usuarios (RF-10). El primer administrador lo crea el seed.
 

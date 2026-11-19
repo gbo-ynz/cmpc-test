@@ -348,7 +348,7 @@ que verifica cada uno están en **[docs/SPEC.md](docs/SPEC.md)**.
 | Requisito                                             | Implementación                                                                       |
 | ----------------------------------------------------- | ------------------------------------------------------------------------------------ |
 | Tests unitarios de componentes y servicios (frontend) | Vitest + Testing Library: 191 tests                                                  |
-| Tests unitarios de servicios y controladores (NestJS) | Jest: 261 tests (más 57 de integración con PostgreSQL real)                          |
+| Tests unitarios de servicios y controladores (NestJS) | Jest: 262 tests (más 57 de integración con PostgreSQL real)                          |
 | Cobertura de al menos 80%                             | API 99,2% de líneas, web 95,7%; umbrales del 80% configurados en ambas apps          |
 | `docker-compose.yml` para todo el stack               | `docker-compose.yml` (db + api + web con healthchecks)                               |
 | README con instalación, uso y arquitectura            | Este documento                                                                       |
@@ -445,7 +445,7 @@ docs/
 | Decisión                                                                                                                                                      | Fundamento                                                                                                                                                                                                     |
 | ------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Puertos como `abstract class`                                                                                                                                 | Interfaz y token de inyección en uno; los casos de uso nunca ven Prisma.                                                                                                                                       |
-| Agregado `Book` inmutable + value object `Price` (en centavos)                                                                                                | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                                                                    |
+| Agregado `Book` inmutable + value object `Price` (pesos chilenos enteros)                                                                                     | Invariantes en un solo lugar; dinero sin flotantes; sin mutaciones ocultas.                                                                                                                                    |
 | Transacciones con `AsyncLocalStorage`                                                                                                                         | Los casos de uso llaman a `transactions.run()` y los repositorios se suman automáticamente. Libro + auditoría se confirman de forma atómica.                                                                   |
 | Autores, editoriales y géneros administrados en sus propias pantallas; el libro los referencia por id                                                         | Un usuario sin perfil de administrador no puede crearlos "por la puerta de atrás" al guardar un libro; los filtros usan IDs estables.                                                                          |
 | El catálogo de filtros solo incluye valores con libros activos                                                                                                | Ningún filtro lleva a un resultado vacío; se resuelve con `EXISTS`, cubierto por los índices `(deleted_at, <fk>)`.                                                                                             |
@@ -481,7 +481,7 @@ devuelve un mensaje genérico.
 - La disponibilidad se deriva del stock (`stock > 0`); no es un dato que se edite a mano.
 - Un libro tiene exactamente un autor, una editorial y un género (el enunciado los menciona en singular).
 - Entre los libros activos, **mismo título (sin distinguir mayúsculas ni espacios extra), autor y editorial es el mismo libro**: crearlo de nuevo responde 409. Solo el título sería demasiado estricto (dos autores pueden tener un libro con el mismo nombre) y el modelo no tiene ISBN. Un libro eliminado no impide volver a cargarlo.
-- Los precios están en CLP con hasta 2 decimales.
+- Los precios son en pesos chilenos (CLP) **enteros**: el peso no usa decimales, así que la API y el formulario rechazan, por ejemplo, 16990,5. La columna sigue siendo `DECIMAL(12,2)` y guarda 16990 como 16990.00, por lo que no hizo falta migrar datos.
 - Hay dos perfiles: administrador (`ADMIN`) y usuario (`USER`). Las rutas de administración responden 403 a un usuario sin ese perfil, y el perfil se lee de la base en cada petición (ver la matriz de permisos en [docs/SPEC.md](docs/SPEC.md)).
 - Una venta pendiente **no reserva stock**: dos ventas pueden pedir el último ejemplar y solo la primera en completarse lo consigue; la otra recibe un 409 al completar.
 - Las ventas las ven y operan todos los usuarios autenticados (administrador y usuario), no solo quien las creó.
@@ -492,7 +492,7 @@ devuelve un mensaje genérico.
 
 | Suite                          | Tests | Cobertura (líneas)                                            |
 | ------------------------------ | ----- | ------------------------------------------------------------- |
-| API (Jest)                     | 261   | 99,2% (sentencias 98,1%; ramas 86,7%)                         |
+| API (Jest)                     | 262   | 99,2% (sentencias 98,1%; ramas 86,7%)                         |
 | Web (Vitest + Testing Library) | 191   | 95,7% (ramas 93,8%)                                           |
 | Integración (Testcontainers)   | 57    | Repositorios, índices, migraciones y seed sobre PostgreSQL 16 |
 | E2E (Playwright, Chromium)     | 27    | Flujos críticos de todos los módulos                          |
@@ -525,7 +525,7 @@ npm run test:int       # requiere Docker en ejecución; no forma parte del pre-p
 | `migrations.int-spec`                  | Las migraciones conservan los datos ya escritos (el rol `EDITOR` pasa a `USER`, el stock se calcula desde la disponibilidad), rechazan stock negativo y crean las tablas de ventas |
 | `sales-indexes.int-spec`               | El listado de ventas y el filtro "libros con stock" usan sus índices compuestos (planes con `EXPLAIN`)                                                                             |
 | `prisma-sale-stock.int-spec`           | Dos descuentos simultáneos sobre el último ejemplar: solo uno se aplica; si una línea no tiene stock, se revierte toda la venta                                                    |
-| `prisma-dashboard.repository.int-spec` | Cifras del dashboard: libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` con decimales                                      |
+| `prisma-dashboard.repository.int-spec` | Cifras del dashboard: libros eliminados, sin stock, ventas canceladas y usuarios desactivados no cuentan; `SUM(precio × stock)` en pesos enteros                                   |
 | `prisma-book.repository.int-spec`      | Un libro con el mismo título (sin importar mayúsculas), autor y editorial se detecta, y el índice único lo rechaza aunque se saltee la verificación; uno eliminado no bloquea      |
 | `prisma-*.repository.int-spec` (resto) | Autores, editoriales, géneros, usuarios y ventas: orden, paginación, mayúsculas y reglas de borrado                                                                                |
 
