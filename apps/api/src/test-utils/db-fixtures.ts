@@ -16,10 +16,13 @@ const named = (name: string) => ({ connectOrCreate: { where: { name }, create: {
 export const names = (items: ReadonlyArray<{ name: string }>): string[] =>
   items.map((item) => item.name);
 
+// Titles must differ: same title, author and publisher is the same book among the active ones.
+let bookSequence = 0;
+
 export function addBook(prisma: PrismaClient, refs: BookReferences, deletedAt: Date | null = null) {
   return prisma.book.create({
     data: {
-      title: `Libro de ${refs.author}`,
+      title: `Libro ${(bookSequence += 1)} de ${refs.author}`,
       price: 1000,
       deletedAt,
       author: named(refs.author),
