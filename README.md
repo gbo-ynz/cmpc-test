@@ -1,86 +1,57 @@
 # CMPC-libros — Plataforma de inventario de libros
 
-Aplicación full-stack para digitalizar el inventario de la tienda CMPC-libros: autenticación JWT con dos perfiles
-(administrador y usuario), CRUD de libros con imagen de portada, filtrado avanzado, ordenamiento por múltiples
-campos, paginación del lado del servidor, búsqueda con debounce, exportación a CSV, soft delete y registro de
-auditoría. Además incluye ventas con control de stock, administración de catálogos y usuarios, y un dashboard
-con una vista distinta para cada perfil.
-
-![Inventario de libros](docs/screenshots/02-inventario.png)
-
-## Contenido
-
-1. [Stack](#stack)
-2. [Inicio rápido con Docker](#inicio-rápido-con-docker)
-3. [Configuración](#configuración)
-4. [Desarrollo local sin Docker](#desarrollo-local-sin-docker)
-5. [Solución de problemas](#solución-de-problemas)
-6. [Guía de uso](#guía-de-uso)
-7. [Cumplimiento de requisitos](#cumplimiento-de-requisitos)
-8. [Resumen de la API](#resumen-de-la-api)
-9. [Arquitectura](#arquitectura)
-10. [Decisiones de diseño](#decisiones-de-diseño)
-11. [Logging y auditoría](#logging-y-auditoría)
-12. [Supuestos](#supuestos)
-13. [Testing](#testing)
-14. [Calidad de código](#calidad-de-código)
-15. [Mejoras fuera del alcance](#mejoras-fuera-del-alcance)
-
-## Stack
-
-| Capa          | Tecnologías                                                                               |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| Frontend      | React 19 · TypeScript · Vite · React Router · TanStack Query · react-hook-form + zod      |
-| Backend       | NestJS 11 · TypeScript · Passport JWT · class-validator · Swagger                         |
-| Base de datos | PostgreSQL 16 · Prisma ORM (esquema declarativo, migraciones versionadas, cliente tipado) |
-| Testing       | Jest · Vitest + Testing Library · Playwright (E2E)                                        |
-| Calidad       | ESLint (máximo 60 líneas por archivo) · Prettier · Husky · lint-staged · commitlint       |
-| Despliegue    | Imágenes Docker multi-stage · docker-compose · nginx                                      |
-
-Monorepo con npm workspaces: `apps/api`, `apps/web` y `apps/e2e`, con un único `package-lock.json`.
+Aplicación full-stack para digitalizar el inventario de una tienda de libros: autenticación JWT con dos perfiles
+(administrador y usuario), CRUD de libros con portada, ventas con control de stock, administración de catálogos
+y usuarios, un dashboard distinto para cada perfil y auditoría de las operaciones.
 
 ## Inicio rápido con Docker
 
-### Requisitos
-
-- Docker Desktop (o Docker Engine con Compose v2) en ejecución.
-- Puertos libres en el host: **8080** (web), **3000** (API) y **5433** (PostgreSQL).
-
-### Levantar el stack
+Solo necesita **Docker Desktop (o Docker Engine con Compose v2) en ejecución** y los puertos **8080**, **3000** y
+**5433** libres. No hace falta instalar Node ni crear ningún archivo de configuración.
 
 ```bash
 git clone https://github.com/gbo-ynz/cmpc-test.git
 cd cmpc-test
-cp .env.example .env          # opcional en local: sin .env se usan los valores por defecto del compose
 docker compose up --build
 ```
 
-El primer build tarda unos minutos. El stack está listo cuando la web responde en http://localhost:8080.
-
-| Servicio          | URL                                                      |
-| ----------------- | -------------------------------------------------------- |
-| Aplicación web    | http://localhost:8080                                    |
-| API               | http://localhost:3000/api                                |
-| Swagger / OpenAPI | http://localhost:3000/api/docs                           |
-| PostgreSQL        | `localhost:5433` (usuario `cmpc`, base `cmpc_libros`)    |
-| Healthcheck       | http://localhost:3000/api/health (estado de API y de BD) |
-
-Credenciales de demostración (una por perfil):
+La primera vez tarda unos minutos: construye las imágenes, migra la base y carga 23 libros de ejemplo. Cuando
+termine, abra **http://localhost:8080** e ingrese con:
 
 | Perfil        | Correo            | Contraseña    |
 | ------------- | ----------------- | ------------- |
 | Administrador | `admin@cmpc.cl`   | `Admin123!`   |
 | Usuario       | `usuario@cmpc.cl` | `Usuario123!` |
 
-### Datos de ejemplo
+Otras direcciones: documentación de la API en http://localhost:3000/api/docs (Swagger) y estado de la API y de la
+base en http://localhost:3000/api/health. Para comprobar que todo está sano, `docker compose ps` debe mostrar los
+tres servicios como `healthy`.
 
-Al iniciar, el contenedor de la API aplica las migraciones (`prisma migrate deploy`) y ejecuta el seed, que
-carga **23 libros de ejemplo** con stock: 8 géneros, 16 editoriales, 20 autores y 5 libros sin stock (no disponibles). Con el tamaño
-de página por defecto son 3 páginas, suficiente para probar paginación, filtros y ordenamiento.
+¿Algo no funciona? Revise la [Solución de problemas](#solución-de-problemas): el caso más común es un puerto
+ocupado. Para volver al estado inicial: `docker compose down -v && docker compose up --build`.
 
-- El seed es **idempotente**: los libros se cargan solo si la tabla `books` está vacía, por lo que reiniciar
-  el stack nunca duplica ni sobrescribe datos. Los dos usuarios de demostración se crean siempre (`upsert`).
-- Los datos están en `apps/api/prisma/seed-data/books.js`; para modificarlos, edite ese archivo.
+![Inventario de libros](docs/screenshots/02-inventario.png)
+
+## Contenido
+
+1. [Inicio rápido con Docker](#inicio-rápido-con-docker)
+2. [Operación y datos de ejemplo](#operación-y-datos-de-ejemplo)
+3. [Stack](#stack)
+4. [Configuración](#configuración)
+5. [Desarrollo local sin Docker](#desarrollo-local-sin-docker)
+6. [Solución de problemas](#solución-de-problemas)
+7. [Guía de uso](#guía-de-uso)
+8. [Cumplimiento de requisitos](#cumplimiento-de-requisitos)
+9. [Resumen de la API](#resumen-de-la-api)
+10. [Arquitectura](#arquitectura)
+11. [Decisiones de diseño](#decisiones-de-diseño)
+12. [Logging y auditoría](#logging-y-auditoría)
+13. [Supuestos](#supuestos)
+14. [Testing](#testing)
+15. [Calidad de código](#calidad-de-código)
+16. [Mejoras fuera del alcance](#mejoras-fuera-del-alcance)
+
+## Operación y datos de ejemplo
 
 ### Operación del stack
 
@@ -95,10 +66,34 @@ de página por defecto son 3 páginas, suficiente para probar paginación, filtr
 
 > `down -v` elimina los volúmenes: todos los datos locales y las portadas subidas.
 
+### Datos de ejemplo
+
+Al iniciar, el contenedor de la API aplica las migraciones (`prisma migrate deploy`) y ejecuta el seed, que
+carga **23 libros de ejemplo** con stock: 8 géneros, 16 editoriales, 20 autores y 5 libros sin stock (no disponibles). Con el tamaño
+de página por defecto son 3 páginas, suficiente para probar paginación, filtros y ordenamiento.
+
+- El seed es **idempotente**: los libros se cargan solo si la tabla `books` está vacía, por lo que reiniciar
+  el stack nunca duplica ni sobrescribe datos. Los dos usuarios de demostración se crean siempre (`upsert`).
+- Los datos están en `apps/api/prisma/seed-data/books.js`; para modificarlos, edite ese archivo.
+
+## Stack
+
+| Capa          | Tecnologías                                                                               |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Frontend      | React 19 · TypeScript · Vite · React Router · TanStack Query · react-hook-form + zod      |
+| Backend       | NestJS 11 · TypeScript · Passport JWT · class-validator · Swagger                         |
+| Base de datos | PostgreSQL 16 · Prisma ORM (esquema declarativo, migraciones versionadas, cliente tipado) |
+| Testing       | Jest · Vitest + Testing Library · Playwright (E2E)                                        |
+| Calidad       | ESLint (máximo 60 líneas por archivo) · Prettier · Husky · lint-staged · commitlint       |
+| Despliegue    | Imágenes Docker multi-stage · docker-compose · nginx                                      |
+
+Monorepo con npm workspaces: `apps/api`, `apps/web` y `apps/e2e`, con un único `package-lock.json`.
+
 ## Configuración
 
-Hay dos archivos de ejemplo, uno por contexto. Ninguno contiene secretos reales y los `.env` están en
-`.gitignore`.
+**Para levantar el stack con Docker en local no necesita ninguno**: los valores por defecto del compose alcanzan.
+Esta sección es para quien quiera cambiarlos o correr la API fuera de Docker. Hay dos archivos de ejemplo, uno por
+contexto; ninguno contiene secretos reales y los `.env` están en `.gitignore`.
 
 ### Docker (`.env` en la raíz, a partir de `.env.example`)
 
