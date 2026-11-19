@@ -11,8 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../auth/index';
-import { Roles } from '../../auth/index';
+import { AdminOnly, CurrentUser } from '../../auth/index';
 import { CreateUserUseCase } from '../application/create-user.use-case';
 import { DeactivateUserUseCase } from '../application/deactivate-user.use-case';
 import { UpdateUserUseCase } from '../application/update-user.use-case';
@@ -21,7 +20,7 @@ import { CreateUserDto, UpdateUserDto } from './user.dto';
 /** Administrators only. The password is never part of any response. */
 @ApiTags('users')
 @ApiBearerAuth()
-@Roles('ADMIN')
+@AdminOnly()
 @Controller('users')
 export class UsersController {
   constructor(

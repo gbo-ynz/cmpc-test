@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../../auth/index';
+import { AdminOnly } from '../../auth/index';
 import {
   DEFAULT_PAGE_SIZE,
   PageQueryDto,
@@ -10,7 +10,7 @@ import { GetUserUseCase, ListUsersPageUseCase } from '../application/user-querie
 /** Administrators only. The password is never part of any response. */
 @ApiTags('users')
 @ApiBearerAuth()
-@Roles('ADMIN')
+@AdminOnly()
 @Controller('users')
 export class UsersQueryController {
   constructor(

@@ -11,8 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../auth/index';
-import { Roles } from '../../auth/index';
+import { AdminOnly, CurrentUser } from '../../auth/index';
 import { CreateAuthorUseCase } from '../application/create-author.use-case';
 import { DeleteReferenceUseCase } from '../application/delete-reference.use-case';
 import { UpdateAuthorUseCase } from '../application/update-author.use-case';
@@ -21,6 +20,7 @@ import { CreateAuthorDto, UpdateAuthorDto } from './author.dto';
 /** Admin-only writes; authors carry details (birth date, biography) besides the name. */
 @ApiTags('authors')
 @ApiBearerAuth()
+@AdminOnly()
 @Controller('authors')
 export class AuthorsController {
   constructor(
@@ -30,14 +30,12 @@ export class AuthorsController {
   ) {}
 
   @Post()
-  @Roles('ADMIN')
   @ApiOperation({ summary: 'Create (admin only; birth date and biography are optional)' })
   create(@Body() dto: CreateAuthorDto, @CurrentUser() user: AuthenticatedUser) {
     return this.createAuthor.execute({ ...dto, actorId: user.id });
   }
 
   @Patch(':id')
-  @Roles('ADMIN')
   @ApiOperation({ summary: 'Partial update (admin only; null clears a detail)' })
   update(
     @Param('id', ParseUUIDPipe) id: string,
@@ -48,7 +46,6 @@ export class AuthorsController {
   }
 
   @Delete(':id')
-  @Roles('ADMIN')
   @HttpCode(HttpStatus.NO_CONTENT)
   @ApiOperation({ summary: 'Delete (admin only; 409 if any book points to it)' })
   async remove(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() user: AuthenticatedUser) {

@@ -1,8 +1,7 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query, StreamableFile } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../auth/index';
-import { Roles } from '../../auth/index';
+import { AdminOnly, CurrentUser } from '../../auth/index';
 import { ExportGenresCsvUseCase } from '../application/export-catalog-csv.use-cases';
 import {
   GetGenreUseCase,
@@ -39,7 +38,7 @@ export class GenresQueryController {
   }
 
   @Get('export')
-  @Roles('ADMIN')
+  @AdminOnly()
   @ApiProduces('text/csv')
   @ApiOperation({ summary: 'Export every genres as CSV (admin only; declared before :id)' })
   async export(@CurrentUser() user: AuthenticatedUser): Promise<StreamableFile> {
