@@ -1,6 +1,6 @@
 import { ExecutionContext, ForbiddenException } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { AuthenticatedUser, UserRole } from '../../../shared/domain/authenticated-user';
+import type { AuthenticatedUser, UserRole } from '../../../../shared/domain/authenticated-user';
 import { RolesGuard } from './roles.guard';
 
 function contextFor(user?: AuthenticatedUser): ExecutionContext {

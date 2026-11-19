@@ -8,10 +8,10 @@ import { PasswordHasher } from './application/ports/password-hasher.port';
 import { TokenIssuer } from './application/ports/token-issuer.port';
 import { UserRepository } from './domain/user';
 import { BcryptPasswordHasher } from './infrastructure/bcrypt-password-hasher';
-import { JwtAuthGuard } from './infrastructure/jwt-auth.guard';
+import { JwtAuthGuard } from './infrastructure/http/jwt-auth.guard';
 import { JwtTokenIssuer } from './infrastructure/jwt-token-issuer';
 import { JwtStrategy } from './infrastructure/jwt.strategy';
-import { RolesGuard } from './infrastructure/roles.guard';
+import { RolesGuard } from './infrastructure/http/roles.guard';
 import { PrismaUserRepository } from './infrastructure/persistence/prisma-user.repository';
 import { AuthController } from './presentation/auth.controller';
 

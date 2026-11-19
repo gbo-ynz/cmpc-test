@@ -1,7 +1,7 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
+import { CurrentUser } from '../../auth/index';
 import { GetDashboardUseCase } from '../application/get-dashboard.use-case';
 
 /** Open to every signed-in user: the content depends on the profile (RF-09). */

@@ -1,15 +1,18 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query, StreamableFile } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
-import { Roles } from '../../../shared/infrastructure/http/roles.decorator';
+import { CurrentUser } from '../../auth/index';
+import { Roles } from '../../auth/index';
 import { ExportGenresCsvUseCase } from '../application/export-catalog-csv.use-cases';
 import {
   GetGenreUseCase,
   ListGenresPageUseCase,
   ListGenresUseCase,
 } from '../application/genre-queries.use-case';
-import { DEFAULT_PAGE_SIZE, PageQueryDto } from './page.query.dto';
+import {
+  DEFAULT_PAGE_SIZE,
+  PageQueryDto,
+} from '../../../shared/infrastructure/http/page.query.dto';
 
 /** Reading is open to every authenticated user (the book form lists genres). */
 @ApiTags('genres')

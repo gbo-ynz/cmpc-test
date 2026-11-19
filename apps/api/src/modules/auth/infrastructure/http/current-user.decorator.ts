@@ -1,5 +1,5 @@
 import { ExecutionContext, UnauthorizedException, createParamDecorator } from '@nestjs/common';
-import { AuthenticatedUser } from '../../domain/authenticated-user';
+import { AuthenticatedUser } from '../../../../shared/domain/authenticated-user';
 
 export function extractCurrentUser(_data: unknown, context: ExecutionContext): AuthenticatedUser {
   const request = context.switchToHttp().getRequest<{ user?: AuthenticatedUser }>();

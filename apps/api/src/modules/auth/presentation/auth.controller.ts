@@ -2,8 +2,8 @@ import { Body, Controller, Get, HttpCode, HttpStatus, Post } from '@nestjs/commo
 import { ApiBearerAuth, ApiOperation, ApiTags, ApiUnauthorizedResponse } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
-import { Public } from '../../../shared/infrastructure/http/public.decorator';
+import { CurrentUser } from '../infrastructure/http/current-user.decorator';
+import { Public } from '../infrastructure/http/public.decorator';
 import { LoginResult, LoginUseCase } from '../application/login.use-case';
 import { LoginDto } from './login.dto';
 

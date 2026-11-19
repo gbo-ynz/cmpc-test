@@ -1,6 +1,6 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { DEFAULT_PAGE_SIZE } from '../../references/presentation/page.query.dto';
+import { DEFAULT_PAGE_SIZE } from '../../../shared/infrastructure/http/page.query.dto';
 import { GetSaleUseCase, ListSalesPageUseCase } from '../application/sale-queries.use-case';
 import { ListSalesQueryDto } from './sale.dto';
 

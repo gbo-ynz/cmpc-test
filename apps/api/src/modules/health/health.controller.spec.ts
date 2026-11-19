@@ -1,4 +1,4 @@
-import type { PrismaService } from '../prisma/prisma.service';
+import type { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
 import { HealthController } from './health.controller';
 
 describe('HealthController', () => {

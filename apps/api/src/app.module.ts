@@ -8,11 +8,11 @@ import { AuthModule } from './modules/auth/auth.module';
 import { BooksModule } from './modules/books/books.module';
 import { CatalogModule } from './modules/catalog/catalog.module';
 import { DashboardModule } from './modules/dashboard/dashboard.module';
+import { HealthModule } from './modules/health/health.module';
 import { ReferencesModule } from './modules/references/references.module';
 import { SalesModule } from './modules/sales/sales.module';
 import { UsersModule } from './modules/users/users.module';
 import { AllExceptionsFilter } from './shared/infrastructure/http/all-exceptions.filter';
-import { HealthController } from './shared/infrastructure/http/health.controller';
 import { RequestLoggingInterceptor } from './shared/infrastructure/http/request-logging.interceptor';
 import { ResponseEnvelopeInterceptor } from './shared/infrastructure/http/response-envelope.interceptor';
 import { PrismaModule } from './shared/infrastructure/prisma/prisma.module';
@@ -29,11 +29,11 @@ const RATE_LIMIT = { ttl: 60_000, limit: 120 };
     BooksModule,
     CatalogModule,
     DashboardModule,
+    HealthModule,
     ReferencesModule,
     SalesModule,
     UsersModule,
   ],
-  controllers: [HealthController],
   providers: [
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_FILTER, useClass: AllExceptionsFilter },

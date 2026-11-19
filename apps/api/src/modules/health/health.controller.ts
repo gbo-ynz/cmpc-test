@@ -1,8 +1,8 @@
 import { Controller, Get } from '@nestjs/common';
 import { ApiOperation, ApiTags } from '@nestjs/swagger';
 import { SkipThrottle } from '@nestjs/throttler';
-import { PrismaService } from '../prisma/prisma.service';
-import { Public } from './public.decorator';
+import { PrismaService } from '../../shared/infrastructure/prisma/prisma.service';
+import { Public } from '../auth/index';
 
 export interface HealthStatus {
   readonly status: 'ok';

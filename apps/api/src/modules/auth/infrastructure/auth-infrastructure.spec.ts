@@ -5,7 +5,7 @@ import type { JwtService } from '@nestjs/jwt';
 import { hashSync } from 'bcryptjs';
 import type { User } from '../domain/user';
 import { BcryptPasswordHasher } from './bcrypt-password-hasher';
-import { JwtAuthGuard } from './jwt-auth.guard';
+import { JwtAuthGuard } from './http/jwt-auth.guard';
 import { JwtTokenIssuer } from './jwt-token-issuer';
 import { JwtStrategy } from './jwt.strategy';
 

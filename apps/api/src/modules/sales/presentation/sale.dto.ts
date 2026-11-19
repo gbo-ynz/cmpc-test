@@ -12,7 +12,7 @@ import {
   Min,
   ValidateNested,
 } from 'class-validator';
-import { PageQueryDto } from '../../references/presentation/page.query.dto';
+import { PageQueryDto } from '../../../shared/infrastructure/http/page.query.dto';
 import {
   PAYMENT_METHODS,
   SALE_STATUSES,

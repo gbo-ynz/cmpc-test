@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
-import { Roles } from '../../../shared/infrastructure/http/roles.decorator';
+import { CurrentUser } from '../../auth/index';
+import { Roles } from '../../auth/index';
 import { CreateUserUseCase } from '../application/create-user.use-case';
 import { DeactivateUserUseCase } from '../application/deactivate-user.use-case';
 import { UpdateUserUseCase } from '../application/update-user.use-case';

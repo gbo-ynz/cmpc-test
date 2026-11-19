@@ -2,7 +2,7 @@ import { Controller, Get } from '@nestjs/common';
 import type { NestExpressApplication } from '@nestjs/platform-express';
 import request from 'supertest';
 import type { User, UserRepository } from '../modules/auth/domain/user';
-import { Roles } from '../shared/infrastructure/http/roles.decorator';
+import { Roles } from '../modules/auth/index';
 import { ADMIN, REGULAR_USER, createHttpApp, tokenFor } from '../test-utils/http-app';
 
 @Controller('probe')

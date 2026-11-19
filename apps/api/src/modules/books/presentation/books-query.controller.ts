@@ -2,7 +2,7 @@ import { Controller, Get, Param, ParseUUIDPipe, Query, StreamableFile } from '@n
 import { ApiBearerAuth, ApiOperation, ApiProduces, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
 import type { Paginated } from '../../../shared/domain/pagination';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
+import { CurrentUser } from '../../auth/index';
 import type { BookView } from '../application/book-view';
 import { ExportBooksCsvUseCase } from '../application/export-books-csv.use-case';
 import { GetBookUseCase } from '../application/get-book.use-case';

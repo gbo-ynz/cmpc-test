@@ -1,7 +1,7 @@
 import { Body, Controller, HttpCode, HttpStatus, Param, ParseUUIDPipe, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
+import { CurrentUser } from '../../auth/index';
 import { CancelSaleUseCase } from '../application/cancel-sale.use-case';
 import { CompleteSaleUseCase } from '../application/complete-sale.use-case';
 import { CreateSaleUseCase } from '../application/create-sale.use-case';

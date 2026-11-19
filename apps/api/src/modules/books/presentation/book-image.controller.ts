@@ -9,7 +9,7 @@ import {
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiBody, ApiConsumes, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
+import { CurrentUser } from '../../auth/index';
 import type { BookView } from '../application/book-view';
 import type { ImageUpload } from '../application/ports/image-storage.port';
 import { UploadBookImageUseCase } from '../application/upload-book-image.use-case';

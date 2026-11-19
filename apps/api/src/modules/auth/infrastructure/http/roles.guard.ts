@@ -1,7 +1,7 @@
 import { CanActivate, ExecutionContext, ForbiddenException, Injectable } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
-import type { AuthenticatedUser, UserRole } from '../../../shared/domain/authenticated-user';
-import { ROLES_KEY } from '../../../shared/infrastructure/http/roles.decorator';
+import type { AuthenticatedUser, UserRole } from '../../../../shared/domain/authenticated-user';
+import { ROLES_KEY } from './roles.decorator';
 
 /**
  * Global guard registered after JwtAuthGuard, so request.user is already resolved (with the role

@@ -11,8 +11,8 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
-import { Roles } from '../../../shared/infrastructure/http/roles.decorator';
+import { CurrentUser } from '../../auth/index';
+import { Roles } from '../../auth/index';
 import { CreateGenreUseCase } from '../application/create-genre.use-case';
 import { DeleteReferenceUseCase } from '../application/delete-reference.use-case';
 import { UpdateGenreUseCase } from '../application/update-genre.use-case';

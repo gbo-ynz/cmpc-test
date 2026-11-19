@@ -11,7 +11,7 @@ import {
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
 import type { AuthenticatedUser } from '../../../shared/domain/authenticated-user';
-import { CurrentUser } from '../../../shared/infrastructure/http/current-user.decorator';
+import { CurrentUser } from '../../auth/index';
 import type { BookView } from '../application/book-view';
 import { CreateBookUseCase } from '../application/create-book.use-case';
 import { DeleteBookUseCase } from '../application/delete-book.use-case';

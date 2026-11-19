@@ -1,7 +1,10 @@
 import { Controller, Get, Param, ParseUUIDPipe, Query } from '@nestjs/common';
 import { ApiBearerAuth, ApiOperation, ApiTags } from '@nestjs/swagger';
-import { Roles } from '../../../shared/infrastructure/http/roles.decorator';
-import { DEFAULT_PAGE_SIZE, PageQueryDto } from '../../references/presentation/page.query.dto';
+import { Roles } from '../../auth/index';
+import {
+  DEFAULT_PAGE_SIZE,
+  PageQueryDto,
+} from '../../../shared/infrastructure/http/page.query.dto';
 import { GetUserUseCase, ListUsersPageUseCase } from '../application/user-queries.use-case';
 
 /** Administrators only. The password is never part of any response. */
